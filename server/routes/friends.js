@@ -115,6 +115,11 @@ router.post('/', async (req, res) => {
         console.log('API: Saving friend to DB...');
         const newFriend = await friend.save();
         console.log('API: Friend saved successfully');
+
+        // Notify both users
+        req.io.to(newFriend.userId).emit('data_updated', { type: 'friend_added', data: newFriend });
+        req.io.to(newFriend.friendId).emit('data_updated', { type: 'friend_added', data: newFriend });
+
         res.status(201).json(newFriend);
     } catch (err) {
         console.error('API: Error saving friend:', err.message);
@@ -125,7 +130,13 @@ router.post('/', async (req, res) => {
 // Remove a friend
 router.delete('/:userId/:friendId', async (req, res) => {
     try {
-        await Friend.findOneAndDelete({ userId: req.params.userId, friendId: req.params.friendId });
+        const { userId, friendId } = req.params;
+        await Friend.findOneAndDelete({ userId, friendId });
+
+        // Notify both users
+        req.io.to(userId).emit('data_updated', { type: 'friend_removed', id: friendId });
+        req.io.to(friendId).emit('data_updated', { type: 'friend_removed', id: userId });
+
         res.json({ message: 'Friend removed' });
     } catch (err) {
         res.status(500).json({ message: err.message });

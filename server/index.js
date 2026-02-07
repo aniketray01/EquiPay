@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { Server } from 'socket.io';
+import http from 'http';
 
 import expenseRoutes from './routes/expenses.js';
 import groupRoutes from './routes/groups.js';
@@ -11,10 +13,41 @@ import userRoutes from './routes/users.js';
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
+const io = new Server(server, {
+    cors: {
+        origin: frontendOrigin,
+        methods: ["GET", "POST"]
+    }
+});
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: frontendOrigin
+}));
 app.use(express.json());
+
+// Pass io to routes
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
+// Socket logic
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    socket.on('join_room', (userId) => {
+        socket.join(userId);
+        console.log(`User ${userId} joined their private room`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
 
 // Routes
 app.use('/api/expenses', expenseRoutes);
@@ -64,6 +97,6 @@ mongoose.connection.on('disconnected', () => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

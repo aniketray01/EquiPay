@@ -61,6 +61,12 @@ router.post('/', async (req, res) => {
     try {
         let newGroup = await group.save();
         newGroup = await populateMemberProfiles(newGroup.toObject());
+
+        // Notify all members
+        newGroup.members.forEach(userId => {
+            req.io.to(userId).emit('data_updated', { type: 'group_added', data: newGroup });
+        });
+
         res.status(201).json(newGroup);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -78,6 +84,12 @@ router.patch('/:id', async (req, res) => {
 
         if (updatedGroup) {
             updatedGroup = await populateMemberProfiles(updatedGroup);
+
+            // Notify all members
+            const allMemberIds = [...new Set([...(updatedGroup.members || []), updatedGroup.creatorId])];
+            allMemberIds.forEach(userId => {
+                req.io.to(userId).emit('data_updated', { type: 'group_updated', data: updatedGroup });
+            });
         }
         res.json(updatedGroup);
     } catch (err) {
@@ -88,7 +100,16 @@ router.patch('/:id', async (req, res) => {
 // Delete group
 router.delete('/:id', async (req, res) => {
     try {
-        await Group.findByIdAndDelete(req.params.id);
+        const group = await Group.findById(req.params.id);
+        if (group) {
+            const allMemberIds = [...new Set([...(group.members || []), group.creatorId])];
+
+            await Group.findByIdAndDelete(req.params.id);
+
+            allMemberIds.forEach(userId => {
+                req.io.to(userId).emit('data_updated', { type: 'group_deleted', id: req.params.id });
+            });
+        }
         res.json({ message: 'Group deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });

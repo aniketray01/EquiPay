@@ -32,6 +32,19 @@ router.post('/', async (req, res) => {
     const expense = new Expense(expenseData);
     try {
         const newExpense = await expense.save();
+
+        // Notify all involved users
+        const affectedUsers = new Set([
+            newExpense.creatorId,
+            newExpense.payerId,
+            newExpense.payeeId,
+            ...(newExpense.splitDetails?.map(s => s.userId) || [])
+        ].filter(Boolean));
+
+        affectedUsers.forEach(userId => {
+            req.io.to(userId).emit('data_updated', { type: 'expense_added', data: newExpense });
+        });
+
         res.status(201).json(newExpense);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -41,7 +54,21 @@ router.post('/', async (req, res) => {
 // Delete an expense
 router.delete('/:id', async (req, res) => {
     try {
-        await Expense.findByIdAndDelete(req.params.id);
+        const expense = await Expense.findById(req.params.id);
+        if (expense) {
+            const affectedUsers = new Set([
+                expense.creatorId,
+                expense.payerId,
+                expense.payeeId,
+                ...(expense.splitDetails?.map(s => s.userId) || [])
+            ].filter(Boolean));
+
+            await Expense.findByIdAndDelete(req.params.id);
+
+            affectedUsers.forEach(userId => {
+                req.io.to(userId).emit('data_updated', { type: 'expense_deleted', id: req.params.id });
+            });
+        }
         res.json({ message: 'Expense deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });

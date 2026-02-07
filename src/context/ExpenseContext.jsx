@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { io } from 'socket.io-client';
 
 const ExpenseContext = createContext();
 
@@ -9,7 +10,7 @@ const MOCK_FRIENDS = [];
 
 const MOCK_GROUPS = [];
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 export const ExpenseProvider = ({ children }) => {
     const { user } = useAuth();
@@ -18,13 +19,41 @@ export const ExpenseProvider = ({ children }) => {
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const refreshData = useCallback(async () => {
+        if (!user) return;
+        try {
+            // 1. Fetch from Backend
+            const [expRes, friendRes, groupRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/expenses/${user.id}`),
+                fetch(`${API_BASE_URL}/friends/${user.id}`),
+                fetch(`${API_BASE_URL}/groups/${user.id}`)
+            ]);
+
+            const dbExpenses = await expRes.json();
+            const dbFriends = await friendRes.json();
+            const dbGroups = await groupRes.json();
+
+            // Normalize IDs (ensure every object has 'id' property for frontend compatibility)
+            const normalize = (items) => items.map(item => ({
+                ...item,
+                id: item.id || item.friendId || item._id
+            }));
+
+            setExpenses(normalize(dbExpenses));
+            setFriends(normalize(dbFriends));
+            setGroups(normalize(dbGroups));
+        } catch (err) {
+            console.error("Error refreshing data:", err);
+        }
+    }, [user]);
+
     // Initial Data Fetch & Migration
     useEffect(() => {
         if (!user) return;
 
-        const fetchData = async () => {
+        const initialFetch = async () => {
             try {
-                // 1. Fetch from Backend
+                // 1. Check migrations while fetching
                 const [expRes, friendRes, groupRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/expenses/${user.id}`),
                     fetch(`${API_BASE_URL}/friends/${user.id}`),
@@ -96,8 +125,30 @@ export const ExpenseProvider = ({ children }) => {
             }
         };
 
-        fetchData();
+        initialFetch();
     }, [user]);
+
+    // Socket Setup
+    useEffect(() => {
+        if (!user) return;
+
+        const SOCKET_URL = API_BASE_URL.replace('/api', '');
+        const socket = io(SOCKET_URL);
+
+        socket.on('connect', () => {
+            console.log('Connected to socket server');
+            socket.emit('join_room', user.id);
+        });
+
+        socket.on('data_updated', (payload) => {
+            console.log('Data update received:', payload);
+            refreshData();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user, refreshData]);
 
     // Self-healing: Ensure group members match valid friends (Useful client-side for immediate UI)
     useEffect(() => {
