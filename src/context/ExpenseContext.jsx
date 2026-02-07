@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { io } from 'socket.io-client';
+import { API_BASE_URL as BASE_URL } from '../config';
 
 const ExpenseContext = createContext();
 
@@ -10,7 +11,7 @@ const MOCK_FRIENDS = [];
 
 const MOCK_GROUPS = [];
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = BASE_URL;
 
 export const ExpenseProvider = ({ children }) => {
     const { user } = useAuth();
