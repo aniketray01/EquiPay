@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { API_BASE_URL } from './ExpenseContext';
 
 const AuthContext = createContext();
 
@@ -42,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
                 // Sync with MongoDB
                 try {
-                    await fetch('http://localhost:5000/api/users/sync', {
+                    await fetch(`${API_BASE_URL}/users/sync`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useExpenses } from '../context/ExpenseContext';
+import { useExpenses, API_BASE_URL } from '../context/ExpenseContext';
 import { ArrowLeft, Users, Plus, X, Zap, List } from 'lucide-react';
 import '../components/styles/Dashboard.css';
 import DebtSimplifier from '../components/DebtSimplifier';
@@ -48,7 +48,7 @@ const GroupDetail = () => {
 
         setIsSearching(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/users/search?query=${query}`);
+            const res = await fetch(`${API_BASE_URL}/users/search?query=${query}`);
             const data = await res.json();
             // Filter out existing members
             setSearchResults(data.filter(u => !group.members.includes(u.firebaseId)));
