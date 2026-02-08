@@ -33,24 +33,8 @@ export const ExpenseProvider = ({ children }) => {
             const dbExpenses = await expRes.json();
             const dbGroups = await groupRes.json();
             
-            // Handle friends response which has { manual, network, addedMe } structure
-            const friendsResponse = await friendRes.json();
-            // Combine all friend types into a single array and remove duplicates
-            const allFriends = [
-                ...(friendsResponse.manual || []),
-                ...(friendsResponse.network || []),
-                ...(friendsResponse.addedMe || [])
-            ];
-
-            // Create a map to remove duplicates by id/friendId
-            const friendsMap = new Map();
-            allFriends.forEach(friend => {
-                const id = friend.id || friend.friendId || friend._id;
-                if (id && !friendsMap.has(id)) {
-                    friendsMap.set(id, { ...friend, id });
-                }
-            });
-            const dbFriends = Array.from(friendsMap.values());
+            // Handle friends response (returns array directly, not object with manual/network/addedMe)
+            const dbFriends = await friendRes.json();
 
             // Normalize IDs (ensure every object has 'id' property for frontend compatibility)
             const normalize = (items) => items.map(item => ({
@@ -82,24 +66,8 @@ export const ExpenseProvider = ({ children }) => {
                 const dbExpenses = await expRes.json();
                 const dbGroups = await groupRes.json();
                 
-                // Handle friends response which has { manual, network, addedMe } structure
-                const friendsResponse = await friendRes.json();
-                // Combine all friend types into a single array and remove duplicates
-                const allFriends = [
-                    ...(friendsResponse.manual || []),
-                    ...(friendsResponse.network || []),
-                    ...(friendsResponse.addedMe || [])
-                ];
-
-                // Create a map to remove duplicates by id/friendId
-                const friendsMap = new Map();
-                allFriends.forEach(friend => {
-                    const id = friend.id || friend.friendId || friend._id;
-                    if (id && !friendsMap.has(id)) {
-                        friendsMap.set(id, { ...friend, id });
-                    }
-                });
-                const dbFriends = Array.from(friendsMap.values());
+                // Handle friends response (returns array directly)
+                const dbFriends = await friendRes.json();
 
                 // Normalize IDs (ensure every object has 'id' property for frontend compatibility)
                 const normalize = (items) => items.map(item => ({
