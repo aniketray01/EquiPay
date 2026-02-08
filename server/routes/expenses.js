@@ -2,19 +2,31 @@ import express from 'express';
 import Expense from '../models/Expense.js';
 import Activity from '../models/Activity.js';
 import User from '../models/User.js';
+import Group from '../models/Group.js';
 
 const router = express.Router();
 
-// Get all expenses for a user (either as creator, payer, or participant)
+// Get all expenses for a user (either as creator, payer, participant, or group member)
 router.get('/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
+        // Find all groups where the user is a member or creator
+        const userGroups = await Group.find({
+            $or: [
+                { creatorId: userId },
+                { members: userId }
+            ]
+        }).select('_id');
+
+        const groupIds = userGroups.map(g => g._id);
+
         const expenses = await Expense.find({
             $or: [
                 { creatorId: userId },
                 { payerId: userId },
                 { payeeId: userId },
-                { 'splitDetails.userId': userId }
+                { 'splitDetails.userId': userId },
+                { groupId: { $in: groupIds } }
             ]
         }).sort({ date: -1 });
         res.json(expenses);
@@ -36,13 +48,22 @@ router.post('/', async (req, res) => {
         const newExpense = await expense.save();
 
         // Notify all involved users
-        const affectedUsers = new Set([
+        const affectedIds = [
             String(newExpense.creatorId),
             String(newExpense.payerId),
             newExpense.payeeId ? String(newExpense.payeeId) : null,
             ...(newExpense.splitDetails?.map(s => String(s.userId)) || [])
-        ].filter(Boolean));
+        ];
 
+        if (newExpense.groupId) {
+            const group = await Group.findById(newExpense.groupId);
+            if (group) {
+                affectedIds.push(...group.members.map(m => String(m)));
+                if (group.creatorId) affectedIds.push(String(group.creatorId));
+            }
+        }
+
+        const affectedUsers = new Set(affectedIds.filter(Boolean));
         const userList = Array.from(affectedUsers);
         console.log(`[ADD] Notifying ${userList.length} users: ${userList.join(', ')}`);
 
@@ -81,7 +102,7 @@ router.put('/:id', async (req, res) => {
 
         const updatedExpense = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
-        const affectedUsers = new Set([
+        const affectedIds = [
             String(oldExpense.creatorId),
             String(oldExpense.payerId),
             oldExpense.payeeId ? String(oldExpense.payeeId) : null,
@@ -90,8 +111,25 @@ router.put('/:id', async (req, res) => {
             String(updatedExpense.payerId),
             updatedExpense.payeeId ? String(updatedExpense.payeeId) : null,
             ...(updatedExpense.splitDetails?.map(s => String(s.userId)) || [])
-        ].filter(Boolean));
+        ];
 
+        if (updatedExpense.groupId) {
+            const group = await Group.findById(updatedExpense.groupId);
+            if (group) {
+                affectedIds.push(...group.members.map(m => String(m)));
+                if (group.creatorId) affectedIds.push(String(group.creatorId));
+            }
+        }
+
+        if (oldExpense.groupId && String(oldExpense.groupId) !== String(updatedExpense.groupId)) {
+            const oldGroup = await Group.findById(oldExpense.groupId);
+            if (oldGroup) {
+                affectedIds.push(...oldGroup.members.map(m => String(m)));
+                if (oldGroup.creatorId) affectedIds.push(String(oldGroup.creatorId));
+            }
+        }
+
+        const affectedUsers = new Set(affectedIds.filter(Boolean));
         const userList = Array.from(affectedUsers);
         console.log(`[UPDATE] Notifying ${userList.length} users: ${userList.join(', ')}`);
 
@@ -128,12 +166,22 @@ router.delete('/:id', async (req, res) => {
     try {
         const expense = await Expense.findById(req.params.id);
         if (expense) {
-            const affectedUsers = new Set([
+            const affectedIds = [
                 String(expense.creatorId),
                 String(expense.payerId),
                 expense.payeeId ? String(expense.payeeId) : null,
                 ...(expense.splitDetails?.map(s => String(s.userId)) || [])
-            ].filter(Boolean));
+            ];
+
+            if (expense.groupId) {
+                const group = await Group.findById(expense.groupId);
+                if (group) {
+                    affectedIds.push(...group.members.map(m => String(m)));
+                    if (group.creatorId) affectedIds.push(String(group.creatorId));
+                }
+            }
+
+            const affectedUsers = new Set(affectedIds.filter(Boolean));
 
             await Expense.findByIdAndDelete(req.params.id);
 

@@ -7,11 +7,12 @@ import '../components/styles/AddExpense.css'; // Reusing similar styles
 
 const SettleUp = () => {
     const navigate = useNavigate();
-    const { addExpense, friends } = useExpenses();
+    const { addExpense, friends, groups } = useExpenses();
     const { user } = useAuth(); // 'u1'
 
     const [recipientId, setRecipientId] = useState('');
     const [amount, setAmount] = useState('');
+    const [selectedGroupId, setSelectedGroupId] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -19,10 +20,12 @@ const SettleUp = () => {
 
         const payment = {
             payerId: user?.id || 'u1',   // I am paying
+            recipientId: recipientId,
             payeeId: recipientId,        // The recipient
             amount: parseFloat(amount),
-            description: 'Payment',      // Standard description
+            description: `Payment to ${friends.find(f => f.id === recipientId)?.name || 'friend'}`,
             type: 'settlement',          // Special type
+            groupId: selectedGroupId || null,
             date: new Date().toISOString(),
             splitDetails: [] // No splits for direct payment
         };
@@ -61,6 +64,21 @@ const SettleUp = () => {
                             <option value="">Select Friend</option>
                             {friends.map(f => (
                                 <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Group Selection */}
+                    <div className="input-group">
+                        <span style={{ marginRight: '1rem', fontWeight: 500, minWidth: '60px' }}>Group:</span>
+                        <select
+                            value={selectedGroupId}
+                            onChange={(e) => setSelectedGroupId(e.target.value)}
+                            style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                        >
+                            <option value="">No Group (Private)</option>
+                            {groups.map(g => (
+                                <option key={g.id} value={g.id}>{g.name}</option>
                             ))}
                         </select>
                     </div>
