@@ -31,8 +31,26 @@ export const ExpenseProvider = ({ children }) => {
             ]);
 
             const dbExpenses = await expRes.json();
-            const dbFriends = await friendRes.json();
             const dbGroups = await groupRes.json();
+            
+            // Handle friends response which has { manual, network, addedMe } structure
+            const friendsResponse = await friendRes.json();
+            // Combine all friend types into a single array and remove duplicates
+            const allFriends = [
+                ...(friendsResponse.manual || []),
+                ...(friendsResponse.network || []),
+                ...(friendsResponse.addedMe || [])
+            ];
+
+            // Create a map to remove duplicates by id/friendId
+            const friendsMap = new Map();
+            allFriends.forEach(friend => {
+                const id = friend.id || friend.friendId || friend._id;
+                if (id && !friendsMap.has(id)) {
+                    friendsMap.set(id, { ...friend, id });
+                }
+            });
+            const dbFriends = Array.from(friendsMap.values());
 
             // Normalize IDs (ensure every object has 'id' property for frontend compatibility)
             const normalize = (items) => items.map(item => ({
@@ -48,13 +66,13 @@ export const ExpenseProvider = ({ children }) => {
         }
     }, [user]);
 
-    // Initial Data Fetch & Migration
+    // Initial Data Fetch
     useEffect(() => {
         if (!user) return;
 
         const initialFetch = async () => {
             try {
-                // 1. Check migrations while fetching
+                // Fetch all data in parallel
                 const [expRes, friendRes, groupRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/expenses/${user.id}`),
                     fetch(`${API_BASE_URL}/friends/${user.id}`),
@@ -62,53 +80,26 @@ export const ExpenseProvider = ({ children }) => {
                 ]);
 
                 const dbExpenses = await expRes.json();
-                const dbFriends = await friendRes.json();
                 const dbGroups = await groupRes.json();
+                
+                // Handle friends response which has { manual, network, addedMe } structure
+                const friendsResponse = await friendRes.json();
+                // Combine all friend types into a single array and remove duplicates
+                const allFriends = [
+                    ...(friendsResponse.manual || []),
+                    ...(friendsResponse.network || []),
+                    ...(friendsResponse.addedMe || [])
+                ];
 
-                // 2. Granular Migration
-                let currentExpenses = [...dbExpenses];
-                let currentFriends = [...dbFriends];
-                let currentGroups = [...dbGroups];
-
-                const localExp = JSON.parse(localStorage.getItem('equipay_expenses') || '[]');
-                const localFriends = JSON.parse(localStorage.getItem('equipay_friends') || '[]');
-                const localGroups = JSON.parse(localStorage.getItem('equipay_groups') || '[]');
-
-                // Migrate Friends if DB is empty for them
-                if (currentFriends.length === 0 && localFriends.length > 0) {
-                    currentFriends = await Promise.all(localFriends.map(f =>
-                        fetch(`${API_BASE_URL}/friends`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...f, userId: user.id })
-                        }).then(res => res.json())
-                    ));
-                    localStorage.removeItem('equipay_friends');
-                }
-
-                // Migrate Groups if DB is empty for them
-                if (currentGroups.length === 0 && localGroups.length > 0) {
-                    currentGroups = await Promise.all(localGroups.map(g =>
-                        fetch(`${API_BASE_URL}/groups`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...g, userId: user.id })
-                        }).then(res => res.json())
-                    ));
-                    localStorage.removeItem('equipay_groups');
-                }
-
-                // Migrate Expenses if DB is empty for them
-                if (currentExpenses.length === 0 && localExp.length > 0) {
-                    currentExpenses = await Promise.all(localExp.map(e =>
-                        fetch(`${API_BASE_URL}/expenses`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...e, userId: user.id })
-                        }).then(res => res.json())
-                    ));
-                    localStorage.removeItem('equipay_expenses');
-                }
+                // Create a map to remove duplicates by id/friendId
+                const friendsMap = new Map();
+                allFriends.forEach(friend => {
+                    const id = friend.id || friend.friendId || friend._id;
+                    if (id && !friendsMap.has(id)) {
+                        friendsMap.set(id, { ...friend, id });
+                    }
+                });
+                const dbFriends = Array.from(friendsMap.values());
 
                 // Normalize IDs (ensure every object has 'id' property for frontend compatibility)
                 const normalize = (items) => items.map(item => ({
@@ -116,9 +107,9 @@ export const ExpenseProvider = ({ children }) => {
                     id: item.id || item.friendId || item._id
                 }));
 
-                setExpenses(normalize(currentExpenses));
-                setFriends(normalize(currentFriends));
-                setGroups(normalize(currentGroups));
+                setExpenses(normalize(dbExpenses));
+                setFriends(normalize(dbFriends));
+                setGroups(normalize(dbGroups));
             } catch (err) {
                 console.error("Error fetching data from server:", err);
             } finally {
