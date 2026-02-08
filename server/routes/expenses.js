@@ -16,9 +16,17 @@ router.get('/:userId', async (req, res) => {
                 { creatorId: userId },
                 { members: userId }
             ]
-        }).select('_id');
+        }).select('_id members creatorId');
 
         const groupIds = userGroups.map(g => g._id);
+
+        // Collect all IDs of people the user shares any group with
+        const allGroupMemberIds = new Set();
+        userGroups.forEach(g => {
+            g.members.forEach(m => allGroupMemberIds.add(String(m)));
+            if (g.creatorId) allGroupMemberIds.add(String(g.creatorId));
+        });
+        const memberList = Array.from(allGroupMemberIds);
 
         const expenses = await Expense.find({
             $or: [
@@ -26,9 +34,18 @@ router.get('/:userId', async (req, res) => {
                 { payerId: userId },
                 { payeeId: userId },
                 { 'splitDetails.userId': userId },
-                { groupId: { $in: groupIds } }
+                { groupId: { $in: groupIds } },
+                // Visibility: Settlements between people who both share a group with the current user
+                {
+                    type: 'settlement',
+                    $and: [
+                        { payerId: { $in: memberList } },
+                        { payeeId: { $in: memberList } }
+                    ]
+                }
             ]
         }).sort({ date: -1 });
+
         res.json(expenses);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -61,6 +78,19 @@ router.post('/', async (req, res) => {
                 affectedIds.push(...group.members.map(m => String(m)));
                 if (group.creatorId) affectedIds.push(String(group.creatorId));
             }
+        } else if (newExpense.type === 'settlement') {
+            // Private settlement between A and B should be visible to any user C 
+            // who is in a group with BOTH A and B.
+            const payerGroups = await Group.find({ members: newExpense.payerId }).select('_id members creatorId');
+            const payeeGroups = await Group.find({ members: newExpense.payeeId }).select('_id members creatorId');
+
+            const payerGroupIds = new Set(payerGroups.map(g => String(g._id)));
+            const sharedGroups = payeeGroups.filter(g => payerGroupIds.has(String(g._id)));
+
+            sharedGroups.forEach(group => {
+                affectedIds.push(...group.members.map(m => String(m)));
+                if (group.creatorId) affectedIds.push(String(group.creatorId));
+            });
         }
 
         const affectedUsers = new Set(affectedIds.filter(Boolean));
