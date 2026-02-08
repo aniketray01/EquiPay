@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses, API_BASE_URL } from '../context/ExpenseContext';
-import { ArrowLeft, Users, Plus, X, Zap, List } from 'lucide-react';
+import { ArrowLeft, Users, Plus, X, Zap, List, Pencil, Trash2 } from 'lucide-react';
 import '../components/styles/Dashboard.css';
 import DebtSimplifier from '../components/DebtSimplifier';
 
@@ -10,7 +10,7 @@ const GroupDetail = () => {
     const { groupId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { groups, expenses, getBalances, friends, addMemberToGroup } = useExpenses();
+    const { groups, expenses, getBalances, friends, addMemberToGroup, deleteExpense } = useExpenses();
     const [showMemberModal, setShowMemberModal] = useState(false);
     const [showSimplified, setShowSimplified] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');

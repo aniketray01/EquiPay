@@ -1,6 +1,7 @@
 import express from 'express';
 import Group from '../models/Group.js';
 import User from '../models/User.js';
+import Activity from '../models/Activity.js';
 
 const router = express.Router();
 
@@ -62,10 +63,24 @@ router.post('/', async (req, res) => {
         let newGroup = await group.save();
         newGroup = await populateMemberProfiles(newGroup.toObject());
 
-        // Notify all members
-        newGroup.members.forEach(userId => {
+        const actor = await User.findOne({ firebaseId: newGroup.creatorId });
+        const actorName = actor ? actor.name : 'Someone';
+
+        // Notify and Log all members
+        await Promise.all(newGroup.members.map(async (userId) => {
             req.io.to(userId).emit('data_updated', { type: 'group_added', data: newGroup });
-        });
+
+            await new Activity({
+                userId,
+                actorId: newGroup.creatorId,
+                actorName,
+                type: 'group_created',
+                description: `${actorName} created group "${newGroup.name}"`,
+                metadata: {
+                    groupId: newGroup._id
+                }
+            }).save();
+        }));
 
         res.status(201).json(newGroup);
     } catch (err) {
@@ -85,11 +100,25 @@ router.patch('/:id', async (req, res) => {
         if (updatedGroup) {
             updatedGroup = await populateMemberProfiles(updatedGroup);
 
-            // Notify all members
+            const actor = await User.findOne({ firebaseId: updatedGroup.creatorId }); // Or whoever performed the action
+            const actorName = actor ? actor.name : 'Someone';
+
+            // Notify and Log all members
             const allMemberIds = [...new Set([...(updatedGroup.members || []), updatedGroup.creatorId])];
-            allMemberIds.forEach(userId => {
+            await Promise.all(allMemberIds.map(async (userId) => {
                 req.io.to(userId).emit('data_updated', { type: 'group_updated', data: updatedGroup });
-            });
+
+                await new Activity({
+                    userId,
+                    actorId: updatedGroup.creatorId, // Simplified for now
+                    actorName,
+                    type: 'member_added',
+                    description: `Group "${updatedGroup.name}" was updated`,
+                    metadata: {
+                        groupId: updatedGroup._id
+                    }
+                }).save();
+            }));
         }
         res.json(updatedGroup);
     } catch (err) {
@@ -104,11 +133,25 @@ router.delete('/:id', async (req, res) => {
         if (group) {
             const allMemberIds = [...new Set([...(group.members || []), group.creatorId])];
 
+            const actor = await User.findOne({ firebaseId: group.creatorId });
+            const actorName = actor ? actor.name : 'Someone';
+
             await Group.findByIdAndDelete(req.params.id);
 
-            allMemberIds.forEach(userId => {
+            await Promise.all(allMemberIds.map(async (userId) => {
                 req.io.to(userId).emit('data_updated', { type: 'group_deleted', id: req.params.id });
-            });
+
+                await new Activity({
+                    userId,
+                    actorId: group.creatorId,
+                    actorName,
+                    type: 'group_deleted',
+                    description: `${actorName} deleted group "${group.name}"`,
+                    metadata: {
+                        groupId: group._id
+                    }
+                }).save();
+            }));
         }
         res.json({ message: 'Group deleted' });
     } catch (err) {

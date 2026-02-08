@@ -1,121 +1,111 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
-import { Search, Filter, Calendar } from 'lucide-react';
+import { Search, History, PlusCircle, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import '../components/styles/Dashboard.css';
 
 const Activity = () => {
     const { user } = useAuth();
-    const { expenses, friends } = useExpenses();
+    const { activities } = useExpenses();
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState('all'); // all, owe, owed
 
-    const filteredExpenses = useMemo(() => {
-        return expenses.filter(expense => {
-            // Search Logic
-            const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const filteredActivities = useMemo(() => {
+        return activities.filter(activity =>
+            activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            activity.actorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            activity.type.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [activities, searchTerm]);
 
-            // Filter Logic
-            let matchesType = true;
-            const isPayer = expense.payerId === user?.id || expense.payerId === 'u1' || expense.payerId === 'me';
-
-            if (filterType === 'owe') {
-                matchesType = !isPayer; // I didn't pay, so I owe
-            } else if (filterType === 'owed') {
-                matchesType = isPayer; // I paid, so I am owed
-            }
-
-            return matchesSearch && matchesType;
-        });
-    }, [expenses, searchTerm, filterType, user]);
-
-    const getPayerName = (payerId) => {
-        if (!payerId) return 'Someone';
-        if (payerId === user?.id || payerId === 'u1' || payerId === 'me') return 'You';
-        const friend = friends.find(f => f.id === payerId);
-        return friend ? friend.name : 'Someone';
+    const getActivityIcon = (type) => {
+        switch (type) {
+            case 'expense_added': return <PlusCircle size={18} style={{ color: '#10b981' }} />;
+            case 'expense_updated': return <Pencil size={18} style={{ color: '#3b82f6' }} />;
+            case 'expense_deleted': return <Trash2 size={18} style={{ color: '#ef4444' }} />;
+            case 'group_created': return <Users size={18} style={{ color: '#8b5cf6' }} />;
+            case 'member_added': return <UserPlus size={18} style={{ color: '#f59e0b' }} />;
+            case 'friend_added': return <UserPlus size={18} style={{ color: '#ec4899' }} />;
+            default: return <History size={18} style={{ color: 'var(--text-light)' }} />;
+        }
     };
 
-    const getParticipantNames = (expense) => {
-        const { selectedFriends, payerId } = expense;
-        if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+    const formatRelativeTime = (date) => {
+        const now = new Date();
+        const diff = now - new Date(date);
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
 
-        const participantIds = [...selectedFriends];
-        if (payerId && !participantIds.includes(payerId)) {
-            participantIds.push(payerId);
-        }
-
-        return participantIds.map(fid => {
-            if (fid === user?.id || fid === 'u1' || fid === 'me') return 'You';
-            const friend = friends.find(f => f.id === fid);
-            return friend ? friend.name : 'Someone';
-        }).join(', ');
+        if (days > 0) return `${days}d ago`;
+        if (hours > 0) return `${hours}h ago`;
+        if (minutes > 0) return `${minutes}m ago`;
+        return 'just now';
     };
 
     return (
         <div className="dashboard-container">
-            <h2 className="dashboard-title">Recent Activity</h2>
+            <h2 className="dashboard-title">Activity Log</h2>
 
-            {/* Search & Filter Bar */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <div className="input-group" style={{ flex: 1, border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.5rem 1rem', backgroundColor: 'var(--white)' }}>
-                    <Search size={20} style={{ color: 'var(--text-light)', marginRight: '0.5rem' }} />
+            {/* Search Bar */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div className="input-group" style={{
+                    flex: 1,
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.6rem 1rem',
+                    backgroundColor: 'var(--white)',
+                    boxShadow: 'var(--shadow-sm)'
+                }}>
+                    <Search size={20} style={{ color: 'var(--text-light)', marginRight: '0.8rem' }} />
                     <input
                         type="text"
-                        placeholder="Search expenses..."
+                        placeholder="Search all activity..."
                         className="input-field"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ fontSize: '0.95rem' }}
                     />
                 </div>
-
-                <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    style={{
-                        padding: '0 1rem',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--border-color)',
-                        backgroundColor: 'var(--white)',
-                        color: 'var(--text-medium)',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <option value="all">All Activity</option>
-                    <option value="owed">You LEnt</option>
-                    <option value="owe">You Borrowed</option>
-                </select>
             </div>
 
             <div className="activity-card">
                 <div className="activity-list">
-                    {filteredExpenses.length === 0 ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-medium)' }}>
-                            <p>No activity found matching your criteria.</p>
+                    {filteredActivities.length === 0 ? (
+                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-medium)' }}>
+                            <History size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                            <p>No activity yet.</p>
                         </div>
                     ) : (
-                        filteredExpenses.map(expense => (
-                            <div key={expense.id} className="activity-item">
-                                <div className="activity-icon">
-                                    {expense.type === 'settlement' ? <HandCoinsIcon /> : '📝'}
+                        filteredActivities.map(activity => (
+                            <div key={activity._id || activity.id} className="activity-item" style={{ padding: '1.2rem 1rem' }}>
+                                <div className="activity-icon" style={{
+                                    backgroundColor: 'var(--secondary-color)',
+                                    borderRadius: '50%',
+                                    width: '40px',
+                                    height: '40px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {getActivityIcon(activity.type)}
                                 </div>
                                 <div className="activity-info">
-                                    <p className="activity-desc">{expense.description}</p>
-                                    <p className="activity-detail">
-                                        {getPayerName(expense.payerId)} paid ₹{expense.amount.toFixed(2)}
+                                    <p className="activity-desc" style={{ fontSize: '0.95rem', fontWeight: 500 }}>
+                                        {activity.description}
                                     </p>
-                                    {expense.type !== 'settlement' && (
-                                        <p className="activity-detail">
-                                            Split with: {getParticipantNames(expense)}
-                                        </p>
-                                    )}
+                                    <p className="activity-detail" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                                        {activity.actorId === user?.id ? 'You' : activity.actorName} performed this action
+                                        {activity.metadata?.amount && ` • ₹${activity.metadata.amount.toFixed(2)}`}
+                                    </p>
                                 </div>
-                                <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                                    <p className={`amount-text ${expense.payerId === user?.id || expense.payerId === 'u1' || expense.payerId === 'me' ? 'positive' : 'negative'}`}>
-                                        {expense.payerId === user?.id || expense.payerId === 'u1' || expense.payerId === 'me' ? 'you lent' : 'you owe'}
+                                <div className="activity-amount" style={{ textAlign: 'right' }}>
+                                    <p className="activity-date" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
+                                        {formatRelativeTime(activity.date)}
                                     </p>
-                                    <p className="activity-date">{new Date(expense.date).toLocaleDateString()}</p>
+                                    <p className="activity-detail" style={{ fontSize: '0.7rem' }}>
+                                        {new Date(activity.date).toLocaleDateString()}
+                                    </p>
                                 </div>
                             </div>
                         ))
@@ -125,16 +115,5 @@ const Activity = () => {
         </div>
     );
 };
-
-// Helper icon component
-const HandCoinsIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17" />
-        <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9" />
-        <path d="m2 16 6 6" />
-        <circle cx="16" cy="9" r="2.9" />
-        <circle cx="6" cy="5" r="3" />
-    </svg>
-);
 
 export default Activity;

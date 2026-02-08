@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
-import { Plus, Users, Home, Plane, Heart, Zap, X, Trash2 } from 'lucide-react';
+import { Plus, Users, Home, Plane, Heart, Zap, X, Trash2, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Groups = () => {
-    const { groups, addGroup, friends, deleteGroup } = useExpenses();
+    const { groups, addGroup, addFriend, friends, deleteGroup } = useExpenses();
     const [showModal, setShowModal] = useState(false);
     const [newGroup, setNewGroup] = useState({
         name: '',
@@ -13,6 +13,9 @@ const Groups = () => {
     });
 
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showAddFriendModal, setShowAddFriendModal] = useState(false);
+    const [newFriend, setNewFriend] = useState({ name: '', email: '' });
+    const [isAddingFriend, setIsAddingFriend] = useState(false);
 
     const groupTypes = [
         { label: 'Home', icon: Home },
@@ -39,6 +42,28 @@ const Groups = () => {
             setNewGroup({ name: '', type: 'Home', members: [] });
         } finally {
             setIsProcessing(false);
+        }
+    };
+
+    const handleAddFriend = async (e) => {
+        e.preventDefault();
+        if (newFriend.name && newFriend.email && !isAddingFriend) {
+            setIsAddingFriend(true);
+            try {
+                const addedFriend = await addFriend(newFriend);
+                if (addedFriend && addedFriend.id) {
+                    setNewGroup(prev => ({
+                        ...prev,
+                        members: [...prev.members, addedFriend.id]
+                    }));
+                }
+                setNewFriend({ name: '', email: '' });
+                setShowAddFriendModal(false);
+            } catch (err) {
+                alert("Failed to add friend. Please check the email or try again later.");
+            } finally {
+                setIsAddingFriend(false);
+            }
         }
     };
 
@@ -190,7 +215,29 @@ const Groups = () => {
                             </div>
 
                             <div>
-                                <label className="card-label">Add Members</label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <label className="card-label" style={{ margin: 0 }}>Add Members</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddFriendModal(true)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '4px 8px',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            backgroundColor: 'var(--secondary-color)',
+                                            color: 'var(--primary-color)',
+                                            border: '1px solid var(--border-color)',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <UserPlus size={14} />
+                                        <span>Add Friend</span>
+                                    </button>
+                                </div>
                                 <div style={{
                                     maxHeight: '200px',
                                     overflowY: 'auto',
@@ -224,6 +271,52 @@ const Groups = () => {
 
                             <button type="submit" className="submit-btn" disabled={!newGroup.name || isProcessing}>
                                 {isProcessing ? 'Creating...' : 'Create Group'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Nested Add Friend Modal */}
+            {showAddFriendModal && (
+                <div className="modal-backdrop" style={{ zIndex: 1100 }}>
+                    <div className="form-section shadow-lg" style={{ width: '100%', maxWidth: '400px', margin: '1rem', padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 className="section-title" style={{ margin: 0 }}>Add New Friend</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddFriendModal(false)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-medium)' }}
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddFriend} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)' }}>NAME</label>
+                                <input
+                                    className="input-field"
+                                    style={{ borderBottom: '1px solid var(--border-color)', width: '100%', padding: '0.5rem 0' }}
+                                    placeholder="Friend's name"
+                                    value={newFriend.name}
+                                    onChange={(e) => setNewFriend({ ...newFriend, name: e.target.value })}
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)' }}>EMAIL</label>
+                                <input
+                                    type="email"
+                                    className="input-field"
+                                    style={{ borderBottom: '1px solid var(--border-color)', width: '100%', padding: '0.5rem 0' }}
+                                    placeholder="Friend's email"
+                                    value={newFriend.email}
+                                    onChange={(e) => setNewFriend({ ...newFriend, email: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="submit-btn" disabled={!newFriend.name || isAddingFriend}>
+                                {isAddingFriend ? 'Adding...' : 'Add Friend'}
                             </button>
                         </form>
                     </div>

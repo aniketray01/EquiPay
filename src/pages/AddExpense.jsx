@@ -1,14 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useExpenses } from '../context/ExpenseContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, UserPlus, X } from 'lucide-react';
 import '../components/styles/AddExpense.css';
 
 const AddExpense = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { addExpense, friends, groups } = useExpenses();
+    const { addExpense, updateExpense, addFriend, friends, groups, expenses } = useExpenses();
+    const { expenseId } = useParams();
+    const isEditMode = Boolean(expenseId);
     const { user } = useAuth();
 
     // If coming from a group page, pre-select that group and its members
@@ -23,6 +25,9 @@ const AddExpense = () => {
     const [customSplits, setCustomSplits] = useState({});
     const [selectedGroupId, setSelectedGroupId] = useState(preSelectedGroupId || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [showAddFriendModal, setShowAddFriendModal] = useState(false);
+    const [newFriend, setNewFriend] = useState({ name: '', email: '' });
+    const [isAddingFriend, setIsAddingFriend] = useState(false);
 
     // Initialize friends selection if group is pre-selected
     useEffect(() => {
@@ -33,10 +38,35 @@ const AddExpense = () => {
         }
     }, [preSelectedGroup, user]);
 
-    // Update payer default when user loads
+    // Pre-fill data if in edit mode
     useEffect(() => {
-        if (user?.id) setPayerId(user.id);
-    }, [user]);
+        if (isEditMode) {
+            const expenseToEdit = expenses.find(e => e.id === expenseId || e._id === expenseId);
+            if (expenseToEdit) {
+                setDescription(expenseToEdit.description);
+                setAmount(expenseToEdit.amount.toString());
+                setPayerId(expenseToEdit.payerId);
+                setSelectedFriends(expenseToEdit.selectedFriends || []);
+                setSelectedGroupId(expenseToEdit.groupId || '');
+
+                // If it's a custom split, we might need to reconstruct customSplits state
+                // but for simplicity in this version, we'll favor the calculated splits.
+                // However, let's try to restore custom splits if they exist.
+                if (expenseToEdit.splitDetails) {
+                    const splits = {};
+                    expenseToEdit.splitDetails.forEach(s => {
+                        splits[s.userId] = s.amount.toString();
+                    });
+                    setCustomSplits(splits);
+                }
+            }
+        }
+    }, [isEditMode, expenseId, expenses]);
+
+    // Update payer default when user loads (only if not editing)
+    useEffect(() => {
+        if (user?.id && !isEditMode) setPayerId(user.id);
+    }, [user, isEditMode]);
 
     const toggleFriend = (friendId) => {
         setSelectedFriends(prev =>
@@ -86,6 +116,25 @@ const AddExpense = () => {
         setCustomSplits(prev => ({ ...prev, [userId]: value }));
     };
 
+    const handleAddFriend = async (e) => {
+        e.preventDefault();
+        if (newFriend.name && newFriend.email && !isAddingFriend) {
+            setIsAddingFriend(true);
+            try {
+                const addedFriend = await addFriend(newFriend);
+                if (addedFriend && addedFriend.id) {
+                    setSelectedFriends(prev => [...prev, addedFriend.id]);
+                }
+                setNewFriend({ name: '', email: '' });
+                setShowAddFriendModal(false);
+            } catch (err) {
+                alert("Failed to add friend. Please check the email or try again later.");
+            } finally {
+                setIsAddingFriend(false);
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!amount || !description || selectedFriends.length === 0 || isSaving) {
@@ -101,7 +150,7 @@ const AddExpense = () => {
             }
         }
 
-        const newExpense = {
+        const expenseData = {
             payerId: payerId,
             description,
             amount: parseFloat(amount),
@@ -112,7 +161,11 @@ const AddExpense = () => {
 
         setIsSaving(true);
         try {
-            await addExpense(newExpense);
+            if (isEditMode) {
+                await updateExpense(expenseId, expenseData);
+            } else {
+                await addExpense(expenseData);
+            }
 
             if (selectedGroupId) {
                 navigate(`/group/${selectedGroupId}`);
@@ -130,7 +183,7 @@ const AddExpense = () => {
                 <button onClick={() => navigate(-1)} className="back-btn">
                     <ArrowLeft size={24} />
                 </button>
-                <h2 className="page-title">Add Expense</h2>
+                <h2 className="page-title">{isEditMode ? 'Edit Expense' : 'Add Expense'}</h2>
                 <div style={{ width: '24px' }}></div>
             </div>
 
@@ -199,20 +252,47 @@ const AddExpense = () => {
                     </div>
                 </div>
 
-                {/* Friend Selection */}
                 <div className="form-section">
-                    <div className="section-header">Split with</div>
+                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Split with</span>
+                        <button
+                            type="button"
+                            onClick={() => setShowAddFriendModal(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'var(--primary-light)',
+                                color: 'var(--primary-color)',
+                                border: 'none',
+                                padding: '4px 8px',
+                                borderRadius: 'var(--radius-md)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <UserPlus size={14} />
+                            Add Friend
+                        </button>
+                    </div>
                     <div className="friend-selector">
-                        {friends.map((friend) => (
-                            <label key={friend.id} className="friend-checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedFriends.includes(friend.id)}
-                                    onChange={() => toggleFriend(friend.id)}
-                                />
-                                <span className="friend-name">{friend.name}</span>
-                            </label>
-                        ))}
+                        {friends.length === 0 ? (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', textAlign: 'center', padding: '1rem' }}>
+                                No friends yet. Add one to start splitting!
+                            </p>
+                        ) : (
+                            friends.map((friend) => (
+                                <label key={friend.id} className="friend-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedFriends.includes(friend.id)}
+                                        onChange={() => toggleFriend(friend.id)}
+                                    />
+                                    <span className="friend-name">{friend.name}</span>
+                                </label>
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -267,10 +347,62 @@ const AddExpense = () => {
                         disabled={!description || !amount || selectedFriends.length === 0 || isSaving}
                     >
                         <Check size={20} />
-                        {isSaving ? 'Saving...' : 'Save Expense'}
+                        {isSaving ? 'Saving...' : (isEditMode ? 'Update Expense' : 'Save Expense')}
                     </button>
                 </div>
             </form>
+            {/* Add Friend Modal */}
+            {showAddFriendModal && (
+                <div className="modal-backdrop">
+                    <div className="form-section shadow-lg" style={{ width: '100%', maxWidth: '400px', margin: '1rem', padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 className="section-title" style={{ margin: 0 }}>Add Friend</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddFriendModal(false)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-medium)' }}
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddFriend} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)' }}>NAME</label>
+                                <input
+                                    type="text"
+                                    placeholder="Friend's name"
+                                    className="input-field"
+                                    style={{ borderBottom: '1px solid var(--border-color)', width: '100%', padding: '0.5rem 0' }}
+                                    value={newFriend.name}
+                                    onChange={(e) => setNewFriend({ ...newFriend, name: e.target.value })}
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)' }}>EMAIL</label>
+                                <input
+                                    type="email"
+                                    placeholder="Friend's email"
+                                    className="input-field"
+                                    style={{ borderBottom: '1px solid var(--border-color)', width: '100%', padding: '0.5rem 0' }}
+                                    value={newFriend.email}
+                                    onChange={(e) => setNewFriend({ ...newFriend, email: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="submit-btn"
+                                style={{ marginTop: '0.5rem' }}
+                                disabled={isAddingFriend}
+                            >
+                                {isAddingFriend ? 'Adding...' : 'Add Friend'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

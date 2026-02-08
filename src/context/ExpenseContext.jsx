@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { io } from 'socket.io-client';
+import Toast from '../components/Toast';
 import { API_BASE_URL as BASE_URL } from '../config';
 
 const ExpenseContext = createContext();
@@ -18,16 +19,19 @@ export const ExpenseProvider = ({ children }) => {
     const [expenses, setExpenses] = useState([]);
     const [friends, setFriends] = useState([]);
     const [groups, setGroups] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [toasts, setToasts] = useState([]);
 
     const refreshData = useCallback(async () => {
         if (!user) return;
         try {
             // 1. Fetch from Backend
-            const [expRes, friendRes, groupRes] = await Promise.all([
+            const [expRes, friendRes, groupRes, actRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/expenses/${user.id}`),
                 fetch(`${API_BASE_URL}/friends/${user.id}`),
-                fetch(`${API_BASE_URL}/groups/${user.id}`)
+                fetch(`${API_BASE_URL}/groups/${user.id}`),
+                fetch(`${API_BASE_URL}/activities/${user.id}`)
             ]);
 
             const dbExpenses = await expRes.json();
@@ -42,9 +46,12 @@ export const ExpenseProvider = ({ children }) => {
                 id: item.id || item.friendId || item._id
             }));
 
+            const dbActivities = await actRes.json();
+
             setExpenses(normalize(dbExpenses));
             setFriends(normalize(dbFriends));
             setGroups(normalize(dbGroups));
+            setActivities(dbActivities);
         } catch (err) {
             console.error("Error refreshing data:", err);
         }
@@ -60,10 +67,11 @@ export const ExpenseProvider = ({ children }) => {
         const initialFetch = async () => {
             try {
                 // Fetch all data in parallel
-                const [expRes, friendRes, groupRes] = await Promise.all([
+                const [expRes, friendRes, groupRes, actRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/expenses/${user.id}`),
                     fetch(`${API_BASE_URL}/friends/${user.id}`),
-                    fetch(`${API_BASE_URL}/groups/${user.id}`)
+                    fetch(`${API_BASE_URL}/groups/${user.id}`),
+                    fetch(`${API_BASE_URL}/activities/${user.id}`)
                 ]);
 
                 const dbExpenses = await expRes.json();
@@ -78,9 +86,12 @@ export const ExpenseProvider = ({ children }) => {
                     id: item.id || item.friendId || item._id
                 }));
 
+                const dbActivities = await actRes.json();
+
                 setExpenses(normalize(dbExpenses));
                 setFriends(normalize(dbFriends));
                 setGroups(normalize(dbGroups));
+                setActivities(dbActivities);
             } catch (err) {
                 console.error("Error fetching data from server:", err);
             } finally {
@@ -104,8 +115,25 @@ export const ExpenseProvider = ({ children }) => {
         });
 
         socket.on('data_updated', (payload) => {
-            console.log('Data update received:', payload);
-            refreshData();
+            const { type, data, id } = payload;
+            console.log('Real-time update received:', type, data);
+
+            let message = '';
+            if (type === 'expense_added') {
+                refreshData();
+                message = `New expense added: ${data.description}`;
+            } else if (type === 'expense_updated') {
+                refreshData();
+                message = `Expense updated: ${data.description}`;
+            } else if (type === 'expense_deleted') {
+                refreshData();
+                message = `An expense was deleted.`;
+            }
+
+            if (message) {
+                const toastId = Date.now();
+                setToasts(prev => [...prev, { id: toastId, message, type }]);
+            }
         });
 
         return () => {
@@ -202,13 +230,35 @@ export const ExpenseProvider = ({ children }) => {
         }
     }, [user]);
 
+    const updateExpense = useCallback(async (id, updatedExpense) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedExpense)
+            });
+            const data = await res.json();
+            const normalizedData = { ...data, id: data.id || data._id };
+            setExpenses(prev => prev.map(e => e.id === id ? normalizedData : e));
+        } catch (err) {
+            console.error("Error updating expense:", err);
+        }
+    }, []);
+
     const addFriend = useCallback(async (newFriend) => {
         try {
             const normalizedEmail = newFriend.email.toLowerCase().trim();
             // Check if user exists in Splitwise Network first
-            const searchRes = await fetch(`${API_BASE_URL}/users/search?query=${normalizedEmail}`);
-            const users = await searchRes.json();
-            const existingUser = users.find(u => u.email.toLowerCase() === normalizedEmail);
+            let existingUser = null;
+            try {
+                const searchRes = await fetch(`${API_BASE_URL}/users/search?query=${normalizedEmail}`);
+                const users = await searchRes.json();
+                if (Array.isArray(users)) {
+                    existingUser = users.find(u => u.email.toLowerCase() === normalizedEmail);
+                }
+            } catch (searchErr) {
+                console.error("Search failed, proceeding with manual add:", searchErr);
+            }
 
             const friendData = {
                 ...newFriend,
@@ -223,9 +273,12 @@ export const ExpenseProvider = ({ children }) => {
                 body: JSON.stringify(friendData)
             });
             const data = await res.json();
-            setFriends(prev => [...prev, { ...data, id: data.id || data.friendId || data._id }]);
+            const normalizedFriend = { ...data, id: data.id || data.friendId || data._id };
+            setFriends(prev => [...prev, normalizedFriend]);
+            return normalizedFriend;
         } catch (err) {
             console.error("Error adding friend:", err);
+            throw err;
         }
     }, [user]);
 
@@ -388,8 +441,10 @@ export const ExpenseProvider = ({ children }) => {
         expenses,
         friends,
         groups,
+        activities,
         loading,
         addExpense,
+        updateExpense,
         addFriend,
         removeFriend,
         addGroup,
@@ -404,6 +459,16 @@ export const ExpenseProvider = ({ children }) => {
     return (
         <ExpenseContext.Provider value={contextValue}>
             {!loading && children}
+            <div className="toast-container" style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 10000 }}>
+                {toasts.map(toast => (
+                    <Toast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                    />
+                ))}
+            </div>
         </ExpenseContext.Provider>
     );
 };

@@ -1,6 +1,7 @@
 import express from 'express';
 import Friend from '../models/Friend.js';
 import mongoose from 'mongoose';
+import Activity from '../models/Activity.js';
 
 const router = express.Router();
 
@@ -119,6 +120,29 @@ router.post('/', async (req, res) => {
         // Notify both users
         req.io.to(newFriend.userId).emit('data_updated', { type: 'friend_added', data: newFriend });
         req.io.to(newFriend.friendId).emit('data_updated', { type: 'friend_added', data: newFriend });
+
+        const actor = await User.findOne({ firebaseId: newFriend.userId });
+        const actorName = actor ? actor.name : 'Someone';
+
+        // Log for Adder
+        await new Activity({
+            userId: newFriend.userId,
+            actorId: newFriend.userId,
+            actorName,
+            type: 'friend_added',
+            description: `You added ${newFriend.name} as a friend`,
+            metadata: { friendId: newFriend.friendId }
+        }).save();
+
+        // Log for Added
+        await new Activity({
+            userId: newFriend.friendId,
+            actorId: newFriend.userId,
+            actorName,
+            type: 'friend_added',
+            description: `${actorName} added you as a friend`,
+            metadata: { friendId: newFriend.userId }
+        }).save();
 
         res.status(201).json(newFriend);
     } catch (err) {

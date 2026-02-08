@@ -9,6 +9,7 @@ import expenseRoutes from './routes/expenses.js';
 import groupRoutes from './routes/groups.js';
 import friendRoutes from './routes/friends.js';
 import userRoutes from './routes/users.js';
+import activityRoutes from './routes/activities.js';
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

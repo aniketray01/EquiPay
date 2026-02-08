@@ -7,12 +7,21 @@ const Friends = () => {
     const [showModal, setShowModal] = useState(false);
     const [newFriend, setNewFriend] = useState({ name: '', email: '' });
 
-    const handleAddFriend = (e) => {
+    const [isAdding, setIsAdding] = useState(false);
+
+    const handleAddFriend = async (e) => {
         e.preventDefault();
-        if (newFriend.name && newFriend.email) {
-            addFriend(newFriend);
-            setNewFriend({ name: '', email: '' });
-            setShowModal(false);
+        if (newFriend.name && newFriend.email && !isAdding) {
+            setIsAdding(true);
+            try {
+                await addFriend(newFriend);
+                setNewFriend({ name: '', email: '' });
+                setShowModal(false);
+            } catch (err) {
+                alert("Failed to add friend. Please check the email or try again later.");
+            } finally {
+                setIsAdding(false);
+            }
         }
     };
 
@@ -97,8 +106,8 @@ const Friends = () => {
                                     required
                                 />
                             </div>
-                            <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                                Add Friend
+                            <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }} disabled={isAdding}>
+                                {isAdding ? 'Adding...' : 'Add Friend'}
                             </button>
                         </form>
                     </div>

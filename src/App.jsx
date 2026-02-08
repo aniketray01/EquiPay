@@ -18,7 +18,7 @@ import { ExpenseProvider } from './context/ExpenseContext';
 // Protected Layout Component
 const ProtectedLayout = () => {
   const { user } = useAuth();
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -39,13 +39,14 @@ const App = () => {
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
-              
+
               {/* Protected Routes */}
               <Route element={<ProtectedLayout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/group/:groupId" element={<GroupDetail />} />
                 <Route path="/add-expense" element={<AddExpense />} />
+                <Route path="/edit-expense/:expenseId" element={<AddExpense />} />
                 <Route path="/settle-up" element={<SettleUp />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/profile" element={<Profile />} />

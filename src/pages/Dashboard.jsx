@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
-import { Zap, List } from 'lucide-react';
+import { Zap, List, Pencil, Trash2 } from 'lucide-react';
 import ExpenseChart from '../components/ExpenseChart';
 import DebtSimplifier from '../components/DebtSimplifier';
 import '../components/styles/Dashboard.css';
@@ -37,7 +37,7 @@ const BalanceCard = ({ title, amount, type = 'neutral' }) => {
 
 const Dashboard = () => {
     const { user } = useAuth();
-    const { balances, expenses, groups, friends } = useExpenses();
+    const { balances, expenses, groups, friends, deleteExpense } = useExpenses();
     const navigate = useNavigate();
     const [showSimplified, setShowSimplified] = React.useState(false);
 
