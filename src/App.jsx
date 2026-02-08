@@ -10,6 +10,7 @@ import AllExpenses from './pages/AllExpenses';
 import Groups from './pages/Groups';
 import GroupDetail from './pages/GroupDetail';
 import SettleUp from './pages/SettleUp';
+import Debug from './pages/Debug';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ExpenseProvider } from './context/ExpenseContext';
@@ -50,6 +51,7 @@ const App = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/activity" element={<Activity />} />
                 <Route path="/expenses" element={<AllExpenses />} />
+                <Route path="/debug" element={<Debug />} />
               </Route>
 
               {/* Catch all - redirect to home */}
