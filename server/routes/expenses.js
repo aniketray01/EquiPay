@@ -35,12 +35,16 @@ router.get('/:userId', async (req, res) => {
                 { payeeId: userId },
                 { 'splitDetails.userId': userId },
                 { groupId: { $in: groupIds } },
-                // Visibility: Settlements between TWO OR MORE distinct members of a shared group
+                // Visibility: Transactions where TWO OR MORE distinct members of a shared group are involved
                 {
                     $and: [
-                        { type: 'settlement' },
                         { payerId: { $in: memberList } },
-                        { payeeId: { $in: memberList } }
+                        {
+                            $or: [
+                                { payeeId: { $in: memberList } },
+                                { 'splitDetails.userId': { $in: memberList } }
+                            ]
+                        }
                     ]
                 }
             ]
@@ -83,19 +87,18 @@ router.post('/', async (req, res) => {
             }
         }
 
-        // 2. Shared Context Broadcast: If A and B settle, notify anyone C who shares a group with BOTH A and B.
-        if (newExpense.type === 'settlement') {
-            const uniqueInvolved = Array.from(new Set(involvedIds));
-            const relevantGroups = await Group.find({ members: { $in: uniqueInvolved } }).select('members creatorId');
-            relevantGroups.forEach(g => {
-                const members = g.members.map(m => String(m));
-                const involvedInThisGroup = uniqueInvolved.filter(id => members.includes(id));
-                if (involvedInThisGroup.length >= 2) {
-                    affectedIds.push(...members);
-                    if (g.creatorId) affectedIds.push(String(g.creatorId));
-                }
-            });
-        }
+        // 2. Shared Context Broadcast: If A and B settle OR share an expense, notify anyone C who shares a group with BOTH A and B.
+        const uniqueInvolved = Array.from(new Set(involvedIds));
+        const relevantGroups = await Group.find({ members: { $in: uniqueInvolved } }).select('members creatorId');
+        relevantGroups.forEach(g => {
+            const members = g.members.map(m => String(m));
+            const involvedInThisGroup = uniqueInvolved.filter(id => members.includes(id));
+            if (involvedInThisGroup.length >= 2) {
+                // Two or more people from this transaction share this group, so all group members must know
+                affectedIds.push(...members);
+                if (g.creatorId) affectedIds.push(String(g.creatorId));
+            }
+        });
 
         const affectedUsers = new Set(affectedIds.filter(Boolean));
         const userList = Array.from(affectedUsers);
@@ -166,18 +169,16 @@ router.put('/:id', async (req, res) => {
         }
 
         // Shared Context Broadcast
-        if (updatedExpense.type === 'settlement' || oldExpense.type === 'settlement') {
-            const uniqueInvolved = Array.from(new Set(involvedIds));
-            const relevantGroups = await Group.find({ members: { $in: uniqueInvolved } }).select('members creatorId');
-            relevantGroups.forEach(g => {
-                const members = g.members.map(m => String(m));
-                const involvedInThisGroup = uniqueInvolved.filter(id => members.includes(id));
-                if (involvedInThisGroup.length >= 2) {
-                    affectedIds.push(...members);
-                    if (g.creatorId) affectedIds.push(String(g.creatorId));
-                }
-            });
-        }
+        const uniqueInvolved = Array.from(new Set(involvedIds));
+        const relevantGroups = await Group.find({ members: { $in: uniqueInvolved } }).select('members creatorId');
+        relevantGroups.forEach(g => {
+            const members = g.members.map(m => String(m));
+            const involvedInThisGroup = uniqueInvolved.filter(id => members.includes(id));
+            if (involvedInThisGroup.length >= 2) {
+                affectedIds.push(...members);
+                if (g.creatorId) affectedIds.push(String(g.creatorId));
+            }
+        });
 
         const affectedUsers = new Set(affectedIds.filter(Boolean));
         const userList = Array.from(affectedUsers);
@@ -234,18 +235,16 @@ router.delete('/:id', async (req, res) => {
             }
 
             // Shared Context Broadcast
-            if (expense.type === 'settlement') {
-                const uniqueInvolved = Array.from(new Set(involvedIds));
-                const relevantGroups = await Group.find({ members: { $in: uniqueInvolved } }).select('members creatorId');
-                relevantGroups.forEach(g => {
-                    const members = g.members.map(m => String(m));
-                    const involvedInThisGroup = uniqueInvolved.filter(id => members.includes(id));
-                    if (involvedInThisGroup.length >= 2) {
-                        affectedIds.push(...members);
-                        if (g.creatorId) affectedIds.push(String(g.creatorId));
-                    }
-                });
-            }
+            const uniqueInvolved = Array.from(new Set(involvedIds));
+            const relevantGroups = await Group.find({ members: { $in: uniqueInvolved } }).select('members creatorId');
+            relevantGroups.forEach(g => {
+                const members = g.members.map(m => String(m));
+                const involvedInThisGroup = uniqueInvolved.filter(id => members.includes(id));
+                if (involvedInThisGroup.length >= 2) {
+                    affectedIds.push(...members);
+                    if (g.creatorId) affectedIds.push(String(g.creatorId));
+                }
+            });
 
             const affectedUsers = new Set(affectedIds.filter(Boolean));
 
