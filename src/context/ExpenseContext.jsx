@@ -32,7 +32,7 @@ export const ExpenseProvider = ({ children }) => {
 
             const dbExpenses = await expRes.json();
             const dbGroups = await groupRes.json();
-            
+
             // Handle friends response (returns array directly, not object with manual/network/addedMe)
             const dbFriends = await friendRes.json();
 
@@ -52,7 +52,10 @@ export const ExpenseProvider = ({ children }) => {
 
     // Initial Data Fetch
     useEffect(() => {
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
 
         const initialFetch = async () => {
             try {
@@ -65,7 +68,7 @@ export const ExpenseProvider = ({ children }) => {
 
                 const dbExpenses = await expRes.json();
                 const dbGroups = await groupRes.json();
-                
+
                 // Handle friends response (returns array directly)
                 const dbFriends = await friendRes.json();
 

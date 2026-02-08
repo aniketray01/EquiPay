@@ -14,7 +14,13 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+const frontendOrigin = [
+    process.env.FRONTEND_URL,
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+].filter(Boolean);
 
 const io = new Server(server, {
     cors: {
@@ -24,6 +30,11 @@ const io = new Server(server, {
 });
 
 // Middleware
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 app.use(cors({
     origin: frontendOrigin
 }));
@@ -60,7 +71,8 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        dbState: mongoose.connection.readyState
+        dbState: mongoose.connection.readyState,
+        allowedOrigins: frontendOrigin
     });
 });
 

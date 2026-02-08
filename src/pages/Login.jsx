@@ -16,8 +16,11 @@ const Login = () => {
     }, [user, navigate]);
 
     const handleLogin = async () => {
-        await login();
-        // Navigation will be handled by the useEffect above once user state updates
+        try {
+            await login();
+        } catch (err) {
+            console.error('Login error:', err);
+        }
     };
 
     return (
