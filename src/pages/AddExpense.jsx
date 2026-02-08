@@ -68,6 +68,15 @@ const AddExpense = () => {
         if (user?.id && !isEditMode) setPayerId(user.id);
     }, [user, isEditMode]);
 
+    // Filter friends list based on selected group
+    const filteredFriends = useMemo(() => {
+        if (!selectedGroupId) return friends;
+        const currentGroup = groups.find(g => g.id === selectedGroupId);
+        if (!currentGroup) return friends;
+        // Keep friends who are in the group members list
+        return friends.filter(f => currentGroup.members.includes(f.id));
+    }, [friends, groups, selectedGroupId]);
+
     const toggleFriend = (friendId) => {
         setSelectedFriends(prev =>
             prev.includes(friendId)
@@ -223,7 +232,7 @@ const AddExpense = () => {
                             style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', flex: 1 }}
                         >
                             <option value={user?.id || 'u1'}>You</option>
-                            {friends.map(f => (
+                            {filteredFriends.map(f => (
                                 <option key={f.id} value={f.id}>{f.name}</option>
                             ))}
                         </select>
@@ -282,7 +291,7 @@ const AddExpense = () => {
                                 No friends yet. Add one to start splitting!
                             </p>
                         ) : (
-                            friends.map((friend) => (
+                            filteredFriends.map((friend) => (
                                 <label key={friend.id} className="friend-checkbox">
                                     <input
                                         type="checkbox"
