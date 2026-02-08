@@ -32,6 +32,18 @@ const GroupDetail = () => {
         return friends.find(f => f.id === id)?.name || 'Someone';
     };
 
+    const getParticipantNames = (expense) => {
+        const { selectedFriends, payerId } = expense;
+        if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+
+        const participantIds = [...selectedFriends];
+        if (payerId && !participantIds.includes(payerId)) {
+            participantIds.push(payerId);
+        }
+
+        return participantIds.map(fid => getMemberName(fid)).join(', ');
+    };
+
     const handleAddMember = async (friendId) => {
         await addMemberToGroup(groupId, friendId);
         setShowMemberModal(false);
@@ -194,6 +206,9 @@ const GroupDetail = () => {
                                         <p className="activity-desc">{expense.description}</p>
                                         <p className="activity-detail">
                                             {getMemberName(expense.payerId)} paid ₹{expense.amount.toFixed(2)}
+                                        </p>
+                                        <p className="activity-detail" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
+                                            Split with: {getParticipantNames(expense)}
                                         </p>
                                     </div>
                                     <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>

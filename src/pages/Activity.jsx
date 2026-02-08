@@ -36,16 +36,20 @@ const Activity = () => {
         return friend ? friend.name : 'Someone';
     };
 
-    const getFriendNames = (friendIds) => {
-        if (!friendIds || friendIds.length === 0) return 'No one';
-        const names = friendIds.map(fid => {
+    const getParticipantNames = (expense) => {
+        const { selectedFriends, payerId } = expense;
+        if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+
+        const participantIds = [...selectedFriends];
+        if (payerId && !participantIds.includes(payerId)) {
+            participantIds.push(payerId);
+        }
+
+        return participantIds.map(fid => {
             if (fid === user?.id || fid === 'u1' || fid === 'me') return 'You';
             const friend = friends.find(f => f.id === fid);
-            return friend ? friend.name : 'Unknown Friend';
-        }).filter(name => name !== 'You');
-
-        if (names.length === 0) return 'No one else';
-        return names.join(', ');
+            return friend ? friend.name : 'Someone';
+        }).join(', ');
     };
 
     return (
@@ -101,9 +105,11 @@ const Activity = () => {
                                     <p className="activity-detail">
                                         {getPayerName(expense.payerId)} paid ₹{expense.amount.toFixed(2)}
                                     </p>
-                                    <p className="activity-detail">
-                                        Split with: {getFriendNames(expense.selectedFriends)}
-                                    </p>
+                                    {expense.type !== 'settlement' && (
+                                        <p className="activity-detail">
+                                            Split with: {getParticipantNames(expense)}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                                     <p className={`amount-text ${expense.payerId === user?.id || expense.payerId === 'u1' || expense.payerId === 'me' ? 'positive' : 'negative'}`}>

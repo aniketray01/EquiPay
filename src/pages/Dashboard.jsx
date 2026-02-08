@@ -53,16 +53,21 @@ const Dashboard = () => {
         return friend ? friend.name : 'Someone';
     };
 
-    const getFriendNames = (friendIds) => {
-        if (!friendIds || friendIds.length === 0) return 'No one';
-        const names = friendIds.map(fid => {
+    const getParticipantNames = (expense) => {
+        const { selectedFriends, payerId } = expense;
+        if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+
+        // Include payer in the participants list if not already there
+        const participantIds = [...selectedFriends];
+        if (payerId && !participantIds.includes(payerId)) {
+            participantIds.push(payerId);
+        }
+
+        return participantIds.map(fid => {
             if (fid === user?.id || fid === 'u1' || fid === 'me') return 'You';
             const friend = friends.find(f => f.id === fid);
-            return friend ? friend.name : 'Unknown Friend';
-        }).filter(name => name !== 'You');
-
-        if (names.length === 0) return 'No one else';
-        return names.join(', ');
+            return friend ? friend.name : 'Someone';
+        }).join(', ');
     };
 
     return (
@@ -200,7 +205,7 @@ const Dashboard = () => {
                                                 </p>
                                                 {!isSettlement && (
                                                     <p className="activity-detail" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
-                                                        Split with: {getFriendNames(expense.selectedFriends)}
+                                                        Split with: {getParticipantNames(expense)}
                                                     </p>
                                                 )}
                                             </div>

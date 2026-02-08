@@ -11,9 +11,16 @@ const AllExpenses = () => {
         return friends.find(f => f.id === payerId)?.name || 'Someone';
     };
 
-    const getFriendNames = (friendIds) => {
-        if (!friendIds || friendIds.length === 0) return 'No one';
-        return friendIds.map(fid => {
+    const getParticipantNames = (expense) => {
+        const { selectedFriends, payerId } = expense;
+        if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+
+        const participantIds = [...selectedFriends];
+        if (payerId && !participantIds.includes(payerId)) {
+            participantIds.push(payerId);
+        }
+
+        return participantIds.map(fid => {
             if (fid === user?.id || fid === 'u1' || fid === 'me') return 'You';
             return friends.find(f => f.id === fid)?.name || 'Unknown Friend';
         }).join(', ');
@@ -37,7 +44,7 @@ const AllExpenses = () => {
                                         Paid by: {getPayerName(expense.payerId)} (₹{expense.amount.toFixed(2)})
                                     </p>
                                     <p className="activity-detail">
-                                        Split with: {getFriendNames(expense.selectedFriends)}
+                                        Split with: {getParticipantNames(expense)}
                                     </p>
                                 </div>
                                 <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
