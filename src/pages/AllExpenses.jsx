@@ -34,7 +34,7 @@ const AllExpenses = () => {
                                 <div className="activity-info">
                                     <p className="activity-desc">{expense.description}</p>
                                     <p className="activity-detail">
-                                        Paid by: {getPayerName(expense.payerId)} (${expense.amount.toFixed(2)})
+                                        Paid by: {getPayerName(expense.payerId)} (₹{expense.amount.toFixed(2)})
                                     </p>
                                     <p className="activity-detail">
                                         Split with: {getFriendNames(expense.selectedFriends)}
@@ -42,7 +42,7 @@ const AllExpenses = () => {
                                 </div>
                                 <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                                     <p className={`amount-text ${expense.payerId === user?.id || expense.payerId === 'u1' || expense.payerId === 'me' ? 'positive' : 'negative'}`}>
-                                        ${expense.amount.toFixed(2)}
+                                        ₹{expense.amount.toFixed(2)}
                                     </p>
                                     <p className="activity-date">{new Date(expense.date).toLocaleDateString()}</p>
                                 </div>

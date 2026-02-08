@@ -99,7 +99,7 @@ const Activity = () => {
                                 <div className="activity-info">
                                     <p className="activity-desc">{expense.description}</p>
                                     <p className="activity-detail">
-                                        {getPayerName(expense.payerId)} paid ${expense.amount.toFixed(2)}
+                                        {getPayerName(expense.payerId)} paid ₹{expense.amount.toFixed(2)}
                                     </p>
                                     <p className="activity-detail">
                                         Split with: {getFriendNames(expense.selectedFriends)}

@@ -28,7 +28,7 @@ const SettleUp = () => {
         };
 
         addExpense(payment);
-        alert(`Payment of $${amount} recorded!`);
+        alert(`Payment of ₹${amount} recorded!`);
         navigate('/');
     };
 
@@ -67,7 +67,7 @@ const SettleUp = () => {
 
                     {/* Amount */}
                     <div className="input-group">
-                        <div className="input-icon">$</div>
+                        <div className="input-icon">₹</div>
                         <input
                             type="number"
                             step="0.01"

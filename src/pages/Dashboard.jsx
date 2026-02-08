@@ -26,7 +26,7 @@ const BalanceCard = ({ title, amount, type = 'neutral' }) => {
         <div className="balance-card">
             <p className="card-label">{title}</p>
             <div className={`card-value ${colorClass}`}>
-                <span>${formattedAmount}</span>
+                <span>₹{formattedAmount}</span>
             </div>
             {amount !== 0 && (
                 <span className="card-subtext">{subText}</span>
@@ -194,8 +194,8 @@ const Dashboard = () => {
                                                 </div>
                                                 <p className="activity-detail">
                                                     {isSettlement
-                                                        ? `${getPayerName(expense.payerId)} paid ${getPayerName(expense.payeeId)} $${expense.amount.toFixed(2)}`
-                                                        : `${getPayerName(expense.payerId)} paid $${expense.amount.toFixed(2)}`
+                                                        ? `${getPayerName(expense.payerId)} paid ${getPayerName(expense.payeeId)} ₹${expense.amount.toFixed(2)}`
+                                                        : `${getPayerName(expense.payerId)} paid ₹${expense.amount.toFixed(2)}`
                                                     }
                                                 </p>
                                                 {!isSettlement && (
@@ -212,7 +212,7 @@ const Dashboard = () => {
                                                     }
                                                 </p>
                                                 <p className={`amount-text ${isPayer ? 'positive' : 'negative'}`}>
-                                                    ${displayAmount.toFixed(2)}
+                                                    ₹{displayAmount.toFixed(2)}
                                                 </p>
                                                 <p className="activity-date">{new Date(expense.date).toLocaleDateString()}</p>
                                             </div>

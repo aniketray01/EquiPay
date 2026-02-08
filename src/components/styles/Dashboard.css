@@ -226,12 +226,45 @@
     color: var(--text-light);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .action-buttons {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .btn {
+        white-space: nowrap;
+        padding: 0.5rem 1rem;
+    }
+
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .dashboard-main {
         grid-template-columns: 1fr;
+    }
+
+    .card-value {
+        font-size: 1.5rem;
+    }
+
+    .activity-item {
+        padding: 1rem 0;
+    }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
     }
 }

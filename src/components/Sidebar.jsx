@@ -5,7 +5,7 @@ import { useExpenses } from '../context/ExpenseContext';
 import { useAuth } from '../context/AuthContext';
 import './styles/Sidebar.css';
 
-const Sidebar = () => {
+const Sidebar = ({ closeSidebar }) => {
     const { logout } = useAuth();
     const { friends } = useExpenses(); // Get real friends
     const navigate = useNavigate();
@@ -37,6 +37,7 @@ const Sidebar = () => {
                     <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={closeSidebar}
                         className={({ isActive }) =>
                             `nav-item ${isActive ? 'active' : ''}`
                         }
@@ -67,7 +68,7 @@ const Sidebar = () => {
                     </div>
                 ) : (
                     friends.map((friend) => (
-                        <NavLink key={friend.id} to="/friends" className="friend-item">
+                        <NavLink key={friend.id} to="/friends" className="friend-item" onClick={closeSidebar}>
                             <Users size={14} style={{ marginRight: '10px' }} />
                             {friend.name}
                         </NavLink>

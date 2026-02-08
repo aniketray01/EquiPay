@@ -96,7 +96,7 @@ const AddExpense = () => {
         if (splitType === 'custom') {
             const totalSplit = splitDetails.reduce((sum, split) => sum + split.amount, 0);
             if (Math.abs(totalSplit - parseFloat(amount)) > 0.01) {
-                alert(`Split amounts must add up to $${amount}. Current total: $${totalSplit.toFixed(2)}`);
+                alert(`Split amounts must add up to ₹${amount}. Current total: ₹${totalSplit.toFixed(2)}`);
                 return;
             }
         }
@@ -150,7 +150,7 @@ const AddExpense = () => {
                     </div>
 
                     <div className="input-group">
-                        <div className="input-icon">$</div>
+                        <div className="input-icon">₹</div>
                         <input
                             type="number"
                             step="0.01"
@@ -243,7 +243,7 @@ const AddExpense = () => {
                                 <div key={split.userId} className="split-item">
                                     <span className="split-person">{split.name}</span>
                                     {splitType === 'equal' ? (
-                                        <span className="split-amount">${split.amount.toFixed(2)}</span>
+                                        <span className="split-amount">₹{split.amount.toFixed(2)}</span>
                                     ) : (
                                         <input
                                             type="number"

@@ -75,7 +75,7 @@ const Profile = () => {
                         <div className="stat-label">Friends</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-value">${stats.totalAmount.toFixed(0)}</div>
+                        <div className="stat-value">₹{stats.totalAmount.toFixed(0)}</div>
                         <div className="stat-label">Total Spent</div>
                     </div>
                 </div>

@@ -53,7 +53,7 @@ const DebtSimplifier = ({ groupId }) => {
 
                     <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-color)' }}>
-                            ${t.amount.toFixed(2)}
+                            ₹{t.amount.toFixed(2)}
                         </p>
                     </div>
                 </div>

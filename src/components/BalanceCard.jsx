@@ -25,7 +25,7 @@ const BalanceCard = ({ title, amount, type = 'neutral' }) => {
                         color: type === 'positive' ? 'hsl(var(--success))' : type === 'negative' ? 'hsl(var(--destructive))' : 'hsl(var(--foreground))'
                     }}
                 >
-                    ${formattedAmount}
+                    ₹{formattedAmount}
                 </span>
                 {amount !== 0 && (
                     <span className="ml-2 text-sm text-gray-400" style={{ color: 'hsl(var(--muted-foreground))' }}>

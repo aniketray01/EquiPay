@@ -102,7 +102,7 @@ const GroupDetail = () => {
                 <div className="balance-card">
                     <p className="card-label">Group Balance</p>
                     <div className={`card-value ${balances.total >= 0 ? 'positive' : 'negative'}`}>
-                        <span>${Math.abs(balances.total).toFixed(2)}</span>
+                        <span>₹{Math.abs(balances.total).toFixed(2)}</span>
                     </div>
                     <span className="card-subtext">
                         {balances.total >= 0 ? 'you are owed overall' : 'you owe overall'}
@@ -193,7 +193,7 @@ const GroupDetail = () => {
                                     <div className="activity-info">
                                         <p className="activity-desc">{expense.description}</p>
                                         <p className="activity-detail">
-                                            {getMemberName(expense.payerId)} paid ${expense.amount.toFixed(2)}
+                                            {getMemberName(expense.payerId)} paid ₹{expense.amount.toFixed(2)}
                                         </p>
                                     </div>
                                     <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
