@@ -40,6 +40,12 @@ Live Demo: https://equi-pay-xi.vercel.app/
 
 ---
 
+## 📸 Screen Previews
+<img width="469" height="328" alt="image" src="https://github.com/user-attachments/assets/16414e90-63c6-4482-a002-dad011e5a8a9" />
+<img width="960" height="474" alt="image" src="https://github.com/user-attachments/assets/9df65455-eecc-4d46-afc5-9b3cbd4dc61a" />
+<img width="955" height="468" alt="image" src="https://github.com/user-attachments/assets/5c86dbe8-cdcb-4bc9-a258-8b0a7a13a0e3" />
+<img width="959" height="471" alt="image" src="https://github.com/user-attachments/assets/fef0fe3b-d08b-40d1-b48d-f157591dc6df" />
+
 ## 🛠 Tech Stack
 
 ### Frontend
@@ -141,4 +147,5 @@ LinkedIn: https://www.linkedin.com/in/aniket-ray/
 ## ⭐ Show Your Support
 
 If you like this project, give it a ⭐ on GitHub!
+
 
