@@ -1,4 +1,4 @@
-﻿# 💸 SplitEase – Expense Sharing App
+﻿# 💸 EquiPay – Expense Sharing App
 
 A full-stack expense sharing application inspired by Splitwise that helps users track shared expenses, manage group finances, and settle balances easily.
 
@@ -48,6 +48,7 @@ Live Demo: https://equi-pay-xi.vercel.app/
 - Firebase Authentication
 - Recharts (Data Visualization)
 - Lucide Icons
+- Socket.io
 
 ### Backend
 - Node.js
@@ -63,5 +64,81 @@ Live Demo: https://equi-pay-xi.vercel.app/
 ---
 
 ## 📂 Project Structure
+client/
+ ├── components
+ ├── context
+ ├── pages
+ ├── services
+ └── utils
 
+server/
+ ├── routes
+ ├── models
+ ├── middleware
+ └── config
+ 
+🧪 Running Locally
+Clone Repository
+git clone https://github.com/aniketray01/EquiPay
+
+Install Dependencies
+Frontend
+cd client
+npm install
+npm run dev
+
+Backend
+cd server
+npm install
+npm start
+
+## 🧠 Core App Logic
+
+The application uses a transaction-based ledger system:
+
+- Every expense creates debt records  
+- Every settlement creates settlement records  
+- All balances are dynamically calculated  
+- Prevents mismatch between group and dashboard balances
+- 🔔 Real-time notifications (Socket.IO)
+- 📊 Expense analytics
+- 📱 Enhanced mobile responsiveness  
+- 🔁 Recurring expenses
+ - 📄 Export financial reports  
+
+---
+
+## 🔐 Security Notes
+
+- Firebase manages authentication  
+- Environment variables secured  
+- Backend protected via CORS configuration  
+
+---
+
+## 📈 Future Improvements
+
+- 💳 Payment gateway integration  
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome. For major changes, please open an issue first.
+
+---
+
+## 👨‍💻 Author
+
+**Aniket Ray**  
+Full Stack Developer  
+
+GitHub: https://github.com/aniketray01  
+LinkedIn: https://www.linkedin.com/in/aniket-ray/
+
+---
+
+## ⭐ Show Your Support
+
+If you like this project, give it a ⭐ on GitHub!
 
