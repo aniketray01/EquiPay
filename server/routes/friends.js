@@ -35,7 +35,8 @@ router.get('/:userId', async (req, res) => {
             ...(e.splitDetails?.map(s => s.userId) || [])
         ]);
 
-        const allMemberIds = [...new Set([...groupMemberIds, ...expenseMemberIds])].filter(id => id !== userId);
+        const allMemberIds = [...new Set([...groupMemberIds, ...expenseMemberIds])]
+            .filter(id => id && id !== userId);
 
         // 4. Added-Me Friends (Reverse Bookmarks)
         // People who have this user in their friends list
@@ -80,11 +81,23 @@ router.get('/:userId', async (req, res) => {
             isMutual: true // Marker for UI
         }));
 
-        // Merge and remove duplicates (prefer manual if exists)
+        // Merge and remove duplicates (preserve all flags)
         const friendsMap = new Map();
-        networkWithProfiles.forEach(f => friendsMap.set(f.id, f));
-        addedMeWithProfiles.forEach(f => friendsMap.set(f.id, f));
-        manualWithProfiles.forEach(f => friendsMap.set(f.id, f));
+
+        // 1. Add Network friends first
+        networkWithProfiles.forEach(f => friendsMap.set(f.id, { ...f }));
+
+        // 2. Merge added-me (reverse) friends
+        addedMeWithProfiles.forEach(f => {
+            const existing = friendsMap.get(f.id) || {};
+            friendsMap.set(f.id, { ...existing, ...f });
+        });
+
+        // 3. Merge manual friends last (manual info is highest priority for name/email)
+        manualWithProfiles.forEach(f => {
+            const existing = friendsMap.get(f.id) || {};
+            friendsMap.set(f.id, { ...existing, ...f });
+        });
 
         res.json(Array.from(friendsMap.values()));
     } catch (err) {

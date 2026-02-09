@@ -46,35 +46,40 @@ const Friends = () => {
                             </div>
                             <div>
                                 <p style={{ fontWeight: 600, color: 'var(--text-dark)' }}>{friend.name}</p>
-                                <p style={{ fontSize: '0.85rem', color: 'var(--text-medium)' }}>{friend.email}</p>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-medium)' }}>{friend.email}</span>
+                                    {friend.isNetwork && (
+                                        <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--bg-light)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-medium)' }}>Shared Group</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => {
-                                if (friend.isNetwork && !friend.isManual) {
-                                    alert("This friend is part of a shared group or expense and cannot be removed until those are settled/deleted.");
-                                    return;
-                                }
-                                if (window.confirm(`Are you sure you want to remove ${friend.name}?`)) {
-                                    removeFriend(friend.id);
-                                }
-                            }}
-                            className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-full transition-colors"
-                            style={{
-                                backgroundColor: 'hsl(0, 84%, 95%)',
-                                color: 'hsl(0, 84%, 60%)',
-                                border: 'none',
-                                padding: '8px',
-                                borderRadius: '50%',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                            title={friend.isNetwork ? "Part of a shared group" : "Remove friend"}
-                        >
-                            <Trash2 size={18} />
-                        </button>
+                        {friend.isManual ? (
+                            <button
+                                onClick={() => {
+                                    if (window.confirm(`Remove ${friend.name} from your manual friends list? (Note: If you share a group, they will still appear as a 'Group Friend')`)) {
+                                        removeFriend(friend.id);
+                                    }
+                                }}
+                                className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-full transition-colors"
+                                style={{
+                                    backgroundColor: 'hsl(0, 84%, 95%)',
+                                    color: 'hsl(0, 84%, 60%)',
+                                    border: 'none',
+                                    padding: '8px',
+                                    borderRadius: '50%',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                                title="Remove personal friend bookmark"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        ) : (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-medium)', fontWeight: 500 }}>Group Contact</span>
+                        )}
                     </div>
                 ))}
             </div>

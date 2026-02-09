@@ -23,10 +23,10 @@ const AddExpense = () => {
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [splitType, setSplitType] = useState('equal');
     const [customSplits, setCustomSplits] = useState({});
-    const [selectedGroupId, setSelectedGroupId] = useState(isSettlement ? 'unset' : (preSelectedGroupId || ''));
-    const [isSaving, setIsSaving] = useState(false);
     const [isSettlement, setIsSettlement] = useState(false);
     const [payeeId, setPayeeId] = useState('');
+    const [selectedGroupId, setSelectedGroupId] = useState(isSettlement ? 'unset' : (preSelectedGroupId || ''));
+    const [isSaving, setIsSaving] = useState(false);
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const [newFriend, setNewFriend] = useState({ name: '', email: '' });
     const [isAddingFriend, setIsAddingFriend] = useState(false);
