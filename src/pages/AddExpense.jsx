@@ -25,7 +25,7 @@ const AddExpense = () => {
     const [customSplits, setCustomSplits] = useState({});
     const [isSettlement, setIsSettlement] = useState(false);
     const [payeeId, setPayeeId] = useState('');
-    const [selectedGroupId, setSelectedGroupId] = useState(isSettlement ? 'unset' : (preSelectedGroupId || ''));
+    const [selectedGroupId, setSelectedGroupId] = useState('unset');
     const [isSaving, setIsSaving] = useState(false);
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const [newFriend, setNewFriend] = useState({ name: '', email: '' });
@@ -191,7 +191,7 @@ const AddExpense = () => {
             description,
             amount: parseFloat(amount),
             selectedFriends: isSettlement ? [] : selectedFriends,
-            groupId: selectedGroupId || null,
+            groupId: (selectedGroupId === 'private' || selectedGroupId === 'unset') ? null : selectedGroupId,
             type: isSettlement ? 'settlement' : 'expense',
             payeeId: isSettlement ? payeeId : null,
             splitDetails: isSettlement ? [] : (splitDetails || []).map(s => ({ userId: s.userId, amount: s.amount }))
@@ -417,7 +417,7 @@ const AddExpense = () => {
                     <button
                         type="submit"
                         className="submit-btn"
-                        disabled={!description || !amount || (!isSettlement && selectedFriends.length === 0) || (isSettlement && (!payeeId || selectedGroupId === 'unset')) || isSaving}
+                        disabled={!description || !amount || (!isSettlement && selectedFriends.length === 0) || selectedGroupId === 'unset' || (isSettlement && !payeeId) || isSaving}
                     >
                         <Check size={20} />
                         {isSaving ? 'Saving...' : (isEditMode ? (isSettlement ? 'Update Payment' : 'Update Expense') : 'Save Expense')}
