@@ -128,6 +128,12 @@ export const ExpenseProvider = ({ children }) => {
             } else if (type === 'expense_deleted') {
                 refreshData();
                 message = `An expense was deleted.`;
+            } else if (type === 'friend_added') {
+                refreshData();
+                message = `A new friend was added.`;
+            } else if (type === 'friend_removed') {
+                setFriends(prev => prev.filter(f => f.id !== id && f.friendId !== id));
+                message = `A friend was removed.`;
             }
 
             if (message) {

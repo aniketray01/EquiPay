@@ -11,7 +11,7 @@ const SettleUp = () => {
     const { user } = useAuth(); // 'u1'
 
     const [recipientId, setRecipientId] = useState('');
-    const [selectedGroupId, setSelectedGroupId] = useState('');
+    const [selectedGroupId, setSelectedGroupId] = useState('unset');
     const [amount, setAmount] = useState('');
 
     // Reset group if recipient changes and not in selected group
@@ -35,7 +35,7 @@ const SettleUp = () => {
             amount: parseFloat(amount),
             description: `Payment to ${friends.find(f => f.id === recipientId)?.name || 'friend'}`,
             type: 'settlement',          // Special type
-            groupId: selectedGroupId || null,
+            groupId: selectedGroupId === 'private' ? null : selectedGroupId,
             date: new Date().toISOString(),
             splitDetails: [] // No splits for direct payment
         };
@@ -85,8 +85,10 @@ const SettleUp = () => {
                             value={selectedGroupId}
                             onChange={(e) => setSelectedGroupId(e.target.value)}
                             style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                            required
                         >
-                            <option value="">No Group (Private)</option>
+                            <option value="unset" disabled>Select context...</option>
+                            <option value="private">Private (Non-Group Payment)</option>
                             {groups
                                 .filter(g => recipientId && g.members.includes(recipientId))
                                 .map(g => (
@@ -116,7 +118,7 @@ const SettleUp = () => {
                         type="submit"
                         className="submit-btn"
                         style={{ backgroundColor: 'var(--success)' }}
-                        disabled={!recipientId || !amount}
+                        disabled={!recipientId || !amount || selectedGroupId === 'unset'}
                     >
                         <Check size={20} />
                         Record Payment

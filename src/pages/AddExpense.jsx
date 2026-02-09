@@ -67,10 +67,20 @@ const AddExpense = () => {
         }
     }, [isEditMode, expenseId, expenses]);
 
-    // Update payer default when user loads (only if not editing)
+    // Initial payer/payee logic
     useEffect(() => {
         if (user?.id && !isEditMode) setPayerId(user.id);
     }, [user, isEditMode]);
+
+    // Reset group if payee changes and not in selected group (for settlements)
+    useEffect(() => {
+        if (isSettlement && selectedGroupId && payeeId) {
+            const group = groups.find(g => g.id === selectedGroupId || g._id === selectedGroupId);
+            if (!group || !group.members.includes(payeeId)) {
+                setSelectedGroupId('');
+            }
+        }
+    }, [isSettlement, payeeId, selectedGroupId, groups]);
 
     // Filter friends list based on selected group
     const filteredFriends = useMemo(() => {
@@ -222,7 +232,9 @@ const AddExpense = () => {
                             className="input-field"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            autoFocus
+                            disabled={isSettlement}
+                            style={isSettlement ? { backgroundColor: 'var(--bg-light)', cursor: 'not-allowed' } : {}}
+                            autoFocus={!isSettlement}
                         />
                     </div>
 
@@ -269,9 +281,12 @@ const AddExpense = () => {
                             style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
                         >
                             <option value="">No Group</option>
-                            {groups.map(g => (
-                                <option key={g.id} value={g.id}>{g.name}</option>
-                            ))}
+                            {groups
+                                .filter(g => !isSettlement || (payeeId && g.members.includes(payeeId)))
+                                .map(g => (
+                                    <option key={g.id || g._id} value={g.id || g._id}>{g.name}</option>
+                                ))
+                            }
                         </select>
                     </div>
                 </div>

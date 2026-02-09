@@ -50,7 +50,15 @@ const Friends = () => {
                             </div>
                         </div>
                         <button
-                            onClick={() => removeFriend(friend.id)}
+                            onClick={() => {
+                                if (friend.isNetwork && !friend.isManual) {
+                                    alert("This friend is part of a shared group or expense and cannot be removed until those are settled/deleted.");
+                                    return;
+                                }
+                                if (window.confirm(`Are you sure you want to remove ${friend.name}?`)) {
+                                    removeFriend(friend.id);
+                                }
+                            }}
                             className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-full transition-colors"
                             style={{
                                 backgroundColor: 'hsl(0, 84%, 95%)',
@@ -63,7 +71,7 @@ const Friends = () => {
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}
-                            title="Remove friend"
+                            title={friend.isNetwork ? "Part of a shared group" : "Remove friend"}
                         >
                             <Trash2 size={18} />
                         </button>

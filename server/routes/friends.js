@@ -155,14 +155,25 @@ router.post('/', async (req, res) => {
 router.delete('/:userId/:friendId', async (req, res) => {
     try {
         const { userId, friendId } = req.params;
-        await Friend.findOneAndDelete({ userId, friendId });
+        console.log(`API: Removing friend relationship between ${userId} and ${friendId}`);
 
-        // Notify both users
+        // Delete manual bookmark from either side
+        const result = await Friend.deleteMany({
+            $or: [
+                { userId, friendId },
+                { userId: friendId, friendId: userId }
+            ]
+        });
+
+        console.log(`API: Deleted ${result.deletedCount} manual friend records`);
+
+        // Notify both users via socket
         req.io.to(userId).emit('data_updated', { type: 'friend_removed', id: friendId });
         req.io.to(friendId).emit('data_updated', { type: 'friend_removed', id: userId });
 
-        res.json({ message: 'Friend removed' });
+        res.json({ message: 'Friend relationship removed', deletedCount: result.deletedCount });
     } catch (err) {
+        console.error('API: Error removing friend:', err);
         res.status(500).json({ message: err.message });
     }
 });
