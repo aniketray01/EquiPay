@@ -51,7 +51,7 @@ const AddExpense = () => {
                 setAmount(expenseToEdit.amount.toString());
                 setPayerId(expenseToEdit.payerId);
                 setSelectedFriends(expenseToEdit.selectedFriends || []);
-                setSelectedGroupId(expenseToEdit.groupId || '');
+                setSelectedGroupId(expenseToEdit.groupId || 'private');
 
                 // If it's a custom split, we might need to reconstruct customSplits state
                 // but for simplicity in this version, we'll favor the calculated splits.
@@ -164,6 +164,12 @@ const AddExpense = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // STRICT VALIDATION: Force user to pick Group or Private
+        if (selectedGroupId === 'unset') {
+            alert('Please select whether this is for a Group or Private (Non-Group).');
+            return;
+        }
 
         // Validation logic differs for settlements
         if (isSettlement) {

@@ -71,13 +71,13 @@ router.get('/:userId', async (req, res) => {
             isNetwork: true
         }));
 
-        // Map reverse friends
+        // Map reverse friends (People who added the current user)
         const addedMeWithProfiles = addedMeProfiles.map(p => ({
             id: p.firebaseId,
             name: p.name,
             email: p.email,
             avatar: p.avatar,
-            isNetwork: true,
+            isAddedMe: true, // Special flag
             isMutual: true // Marker for UI
         }));
 
