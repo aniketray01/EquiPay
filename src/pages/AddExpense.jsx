@@ -25,6 +25,8 @@ const AddExpense = () => {
     const [customSplits, setCustomSplits] = useState({});
     const [selectedGroupId, setSelectedGroupId] = useState(preSelectedGroupId || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [isSettlement, setIsSettlement] = useState(false);
+    const [payeeId, setPayeeId] = useState('');
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const [newFriend, setNewFriend] = useState({ name: '', email: '' });
     const [isAddingFriend, setIsAddingFriend] = useState(false);
@@ -43,6 +45,8 @@ const AddExpense = () => {
         if (isEditMode) {
             const expenseToEdit = expenses.find(e => e.id === expenseId || e._id === expenseId);
             if (expenseToEdit) {
+                setIsSettlement(expenseToEdit.type === 'settlement');
+                setPayeeId(expenseToEdit.payeeId || '');
                 setDescription(expenseToEdit.description);
                 setAmount(expenseToEdit.amount.toString());
                 setPayerId(expenseToEdit.payerId);
@@ -146,9 +150,18 @@ const AddExpense = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!amount || !description || selectedFriends.length === 0 || isSaving) {
-            if (!isSaving) alert('Please fill in all fields and select at least one friend');
-            return;
+
+        // Validation logic differs for settlements
+        if (isSettlement) {
+            if (!amount || !description || !payeeId || isSaving) {
+                if (!isSaving) alert('Please fill in description, amount and payee');
+                return;
+            }
+        } else {
+            if (!amount || !description || selectedFriends.length === 0 || isSaving) {
+                if (!isSaving) alert('Please fill in all fields and select at least one friend');
+                return;
+            }
         }
 
         if (splitType === 'custom') {
@@ -163,9 +176,11 @@ const AddExpense = () => {
             payerId: payerId,
             description,
             amount: parseFloat(amount),
-            selectedFriends,
+            selectedFriends: isSettlement ? [] : selectedFriends,
             groupId: selectedGroupId || null,
-            splitDetails: (splitDetails || []).map(s => ({ userId: s.userId, amount: s.amount }))
+            type: isSettlement ? 'settlement' : 'expense',
+            payeeId: isSettlement ? payeeId : null,
+            splitDetails: isSettlement ? [] : (splitDetails || []).map(s => ({ userId: s.userId, amount: s.amount }))
         };
 
         setIsSaving(true);
@@ -261,52 +276,72 @@ const AddExpense = () => {
                     </div>
                 </div>
 
-                <div className="form-section">
-                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Split with</span>
-                        <button
-                            type="button"
-                            onClick={() => setShowAddFriendModal(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                background: 'var(--primary-light)',
-                                color: 'var(--primary-color)',
-                                border: 'none',
-                                padding: '4px 8px',
-                                borderRadius: 'var(--radius-md)',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            <UserPlus size={14} />
-                            Add Friend
-                        </button>
+                {!isSettlement ? (
+                    <div className="form-section">
+                        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>Split with</span>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddFriendModal(true)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    background: 'var(--primary-light)',
+                                    color: 'var(--primary-color)',
+                                    border: 'none',
+                                    padding: '4px 8px',
+                                    borderRadius: 'var(--radius-md)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <UserPlus size={14} />
+                                Add Friend
+                            </button>
+                        </div>
+                        <div className="friend-selector">
+                            {friends.length === 0 ? (
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', textAlign: 'center', padding: '1rem' }}>
+                                    No friends yet. Add one to start splitting!
+                                </p>
+                            ) : (
+                                filteredFriends.map((friend) => (
+                                    <label key={friend.id} className="friend-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedFriends.includes(friend.id)}
+                                            onChange={() => toggleFriend(friend.id)}
+                                        />
+                                        <span className="friend-name">{friend.name}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
                     </div>
-                    <div className="friend-selector">
-                        {friends.length === 0 ? (
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', textAlign: 'center', padding: '1rem' }}>
-                                No friends yet. Add one to start splitting!
-                            </p>
-                        ) : (
-                            filteredFriends.map((friend) => (
-                                <label key={friend.id} className="friend-checkbox">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedFriends.includes(friend.id)}
-                                        onChange={() => toggleFriend(friend.id)}
-                                    />
-                                    <span className="friend-name">{friend.name}</span>
-                                </label>
-                            ))
-                        )}
+                ) : (
+                    <div className="form-section">
+                        <div className="section-header">Paid To</div>
+                        <div className="input-group">
+                            <select
+                                value={payeeId}
+                                onChange={(e) => setPayeeId(e.target.value)}
+                                style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', flex: 1 }}
+                                required
+                            >
+                                <option value="">Select Recipient</option>
+                                <option value={user?.id || 'u1'}>You</option>
+                                {friends.map(f => (
+                                    <option key={f.id} value={f.id}>{f.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Split Type Selection */}
-                {selectedFriends.length > 0 && (
+                {!isSettlement && selectedFriends.length > 0 && (
                     <div className="form-section">
                         <div className="section-header">Split Type</div>
                         <div className="split-options">
@@ -353,10 +388,10 @@ const AddExpense = () => {
                     <button
                         type="submit"
                         className="submit-btn"
-                        disabled={!description || !amount || selectedFriends.length === 0 || isSaving}
+                        disabled={!description || !amount || (!isSettlement && selectedFriends.length === 0) || (isSettlement && !payeeId) || isSaving}
                     >
                         <Check size={20} />
-                        {isSaving ? 'Saving...' : (isEditMode ? 'Update Expense' : 'Save Expense')}
+                        {isSaving ? 'Saving...' : (isEditMode ? (isSettlement ? 'Update Payment' : 'Update Expense') : 'Save Expense')}
                     </button>
                 </div>
             </form>
