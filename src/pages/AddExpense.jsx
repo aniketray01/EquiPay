@@ -23,7 +23,7 @@ const AddExpense = () => {
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [splitType, setSplitType] = useState('equal');
     const [customSplits, setCustomSplits] = useState({});
-    const [selectedGroupId, setSelectedGroupId] = useState(preSelectedGroupId || '');
+    const [selectedGroupId, setSelectedGroupId] = useState(isSettlement ? 'unset' : (preSelectedGroupId || ''));
     const [isSaving, setIsSaving] = useState(false);
     const [isSettlement, setIsSettlement] = useState(false);
     const [payeeId, setPayeeId] = useState('');
@@ -72,15 +72,19 @@ const AddExpense = () => {
         if (user?.id && !isEditMode) setPayerId(user.id);
     }, [user, isEditMode]);
 
-    // Reset group if payee changes and not in selected group (for settlements)
+    // Reset group if selected friends are not in the selected group
     useEffect(() => {
-        if (isSettlement && selectedGroupId && payeeId) {
+        if (selectedGroupId && selectedGroupId !== 'unset' && selectedFriends.length > 0) {
             const group = groups.find(g => g.id === selectedGroupId || g._id === selectedGroupId);
-            if (!group || !group.members.includes(payeeId)) {
-                setSelectedGroupId('');
+            if (group) {
+                const groupMembers = new Set(group.members);
+                const allFriendsInGroup = selectedFriends.every(friendId => groupMembers.has(friendId));
+                if (!allFriendsInGroup) {
+                    setSelectedGroupId('unset');
+                }
             }
         }
-    }, [isSettlement, payeeId, selectedGroupId, groups]);
+    }, [selectedFriends, selectedGroupId, groups]);
 
     // Filter friends list based on selected group
     const filteredFriends = useMemo(() => {
@@ -269,20 +273,30 @@ const AddExpense = () => {
                     <div className="input-group" style={{ borderBottom: 'none', paddingTop: '1rem' }}>
                         <span style={{ marginRight: '1rem', fontWeight: 500 }}>Group:</span>
                         <select
-                            value={selectedGroupId}
+                            value={selectedGroupId || 'unset'}
                             onChange={(e) => {
                                 setSelectedGroupId(e.target.value);
-                                const grp = groups.find(g => g.id === e.target.value);
-                                if (grp) {
+                                const grp = groups.find(g => g.id === e.target.value || g._id === e.target.value);
+                                if (grp && !isSettlement) {
                                     const friendsInGroup = grp.members.filter(id => id !== 'u1' && id !== 'me' && id !== user?.id);
                                     setSelectedFriends(friendsInGroup);
                                 }
                             }}
-                            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', minWidth: '150px' }}
+                            required
                         >
-                            <option value="">No Group</option>
+                            <option value="unset" disabled>Select context...</option>
+                            <option value="private">Private (Non-Group)</option>
                             {groups
-                                .filter(g => !isSettlement || (payeeId && g.members.includes(payeeId)))
+                                .filter(g => {
+                                    if (isSettlement) {
+                                        return payeeId && g.members.includes(payeeId);
+                                    } else if (selectedFriends.length > 0) {
+                                        const groupMembers = new Set(g.members);
+                                        return selectedFriends.every(friendId => groupMembers.has(friendId));
+                                    }
+                                    return true; // Show all if nothing selected yet
+                                })
                                 .map(g => (
                                     <option key={g.id || g._id} value={g.id || g._id}>{g.name}</option>
                                 ))
@@ -403,7 +417,7 @@ const AddExpense = () => {
                     <button
                         type="submit"
                         className="submit-btn"
-                        disabled={!description || !amount || (!isSettlement && selectedFriends.length === 0) || (isSettlement && !payeeId) || isSaving}
+                        disabled={!description || !amount || (!isSettlement && selectedFriends.length === 0) || (isSettlement && (!payeeId || selectedGroupId === 'unset')) || isSaving}
                     >
                         <Check size={20} />
                         {isSaving ? 'Saving...' : (isEditMode ? (isSettlement ? 'Update Payment' : 'Update Expense') : 'Save Expense')}

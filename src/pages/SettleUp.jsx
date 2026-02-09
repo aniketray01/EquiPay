@@ -16,10 +16,10 @@ const SettleUp = () => {
 
     // Reset group if recipient changes and not in selected group
     React.useEffect(() => {
-        if (selectedGroupId && recipientId) {
+        if (selectedGroupId && selectedGroupId !== 'unset' && recipientId) {
             const group = groups.find(g => g.id === selectedGroupId || g._id === selectedGroupId);
             if (!group || !group.members.includes(recipientId)) {
-                setSelectedGroupId('');
+                setSelectedGroupId('unset');
             }
         }
     }, [recipientId, selectedGroupId, groups]);
