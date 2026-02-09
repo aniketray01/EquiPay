@@ -11,8 +11,18 @@ const SettleUp = () => {
     const { user } = useAuth(); // 'u1'
 
     const [recipientId, setRecipientId] = useState('');
-    const [amount, setAmount] = useState('');
     const [selectedGroupId, setSelectedGroupId] = useState('');
+    const [amount, setAmount] = useState('');
+
+    // Reset group if recipient changes and not in selected group
+    React.useEffect(() => {
+        if (selectedGroupId && recipientId) {
+            const group = groups.find(g => g.id === selectedGroupId || g._id === selectedGroupId);
+            if (!group || !group.members.includes(recipientId)) {
+                setSelectedGroupId('');
+            }
+        }
+    }, [recipientId, selectedGroupId, groups]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -77,9 +87,12 @@ const SettleUp = () => {
                             style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
                         >
                             <option value="">No Group (Private)</option>
-                            {groups.map(g => (
-                                <option key={g.id} value={g.id}>{g.name}</option>
-                            ))}
+                            {groups
+                                .filter(g => recipientId && g.members.includes(recipientId))
+                                .map(g => (
+                                    <option key={g.id || g._id} value={g.id || g._id}>{g.name}</option>
+                                ))
+                            }
                         </select>
                     </div>
 
