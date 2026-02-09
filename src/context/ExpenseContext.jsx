@@ -177,16 +177,8 @@ export const ExpenseProvider = ({ children }) => {
             memberSet.add(user?.id ? String(user.id) : 'u1');
 
             filteredExpenses = expenses.filter(e => {
-                // Definitely include if tagged with group
-                if (e.groupId === filterGroupId || e.groupId === group._id) return true;
-
-                // For settlements, include if BOTH payer and payee are members of this group
-                if (e.type === 'settlement') {
-                    const payer = String(e.payerId);
-                    const payee = e.payeeId ? String(e.payeeId) : null;
-                    return memberSet.has(payer) && memberSet.has(payee);
-                }
-                return false;
+                // Strictly include ONLY if tagged with this specific group
+                return e.groupId === filterGroupId || e.groupId === group._id;
             });
         } else {
             filteredExpenses = expenses;
@@ -402,23 +394,8 @@ export const ExpenseProvider = ({ children }) => {
 
             // Filter expenses to include those where all involved parties are members of the group
             filteredExpenses = expenses.filter(exp => {
-                // If it's tagged with this group, it definitely counts
-                if (exp.groupId === groupId || exp.groupId === group._id) return true;
-
-                const payerId = normalizeId(exp.payerId);
-                if (!memberSet.has(payerId)) return false;
-
-                if (exp.type === 'settlement') {
-                    const payeeId = normalizeId(exp.payeeId);
-                    return memberSet.has(payeeId);
-                } else {
-                    // Regular expense logic: check if ANY of the participants are in the group
-                    // Actually, if ANY participant is in the group, we count it but ONLY for the members.
-                    // However, to keep math 'clean' for the group view, we only count private/other group transactions
-                    // if BOTH the payer and the participant are group members.
-                    const participantIds = (exp.splitDetails || []).map(s => normalizeId(s.userId));
-                    return participantIds.every(id => memberSet.has(id));
-                }
+                // Strictly include ONLY if tagged with this specific group
+                return exp.groupId === groupId || exp.groupId === group._id;
             });
         } else {
             // Global: include all friends and groups
