@@ -44,24 +44,22 @@ const Friends = () => {
                             <div style={{ width: '40px', height: '40px', backgroundColor: 'var(--secondary-color)', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-medium)' }}>
                                 <Users size={20} />
                             </div>
-                            <div style={{ minWidth: 0 }}>
+                            <div style={{ flexGrow: 1, minWidth: 0 }}>
                                 <p style={{ fontWeight: 600, color: 'var(--text-dark)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{friend.name}</p>
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '4px' }}>
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-light)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{friend.email}</span>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '2px' }}>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{friend.email}</span>
                                 </div>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: '1rem' }}>
                             {friend.isNetwork && !friend.isManual && (
-                                <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--bg-light)', padding: '2px 8px', borderRadius: '4px', color: 'var(--text-medium)', fontWeight: 600 }}>Group Contact</span>
+                                <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--bg-light)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-medium)', fontWeight: 600, whiteSpace: 'nowrap' }}>Group</span>
                             )}
                             {friend.isAddedMe && !friend.isManual && !friend.isNetwork && (
-                                <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--bg-light)', padding: '2px 8px', borderRadius: '4px', color: 'var(--text-medium)', fontWeight: 600 }}>In Network</span>
+                                <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--success-light)', padding: '2px 6px', borderRadius: '4px', color: 'var(--success)', fontWeight: 600, whiteSpace: 'nowrap' }}>Network</span>
                             )}
                             <button
                                 onClick={() => {
-                                    // Only block deletion if they are ONLY a network contact (no manual bookmark and no reverse bookmark)
-                                    // Actually, if it's isAddedMe, we should allow deleting the local view of them.
                                     if (friend.isNetwork && !friend.isManual && !friend.isAddedMe) {
                                         alert(`${friend.name} is a contact from one of your shared groups. To remove them, you must either remove them from the group or leave the group yourself.`);
                                         return;
@@ -73,20 +71,21 @@ const Friends = () => {
                                 }}
                                 className="delete-friend-btn"
                                 style={{
-                                    backgroundColor: 'hsl(0, 84%, 95%)',
+                                    backgroundColor: 'hsl(0, 84%, 96%)',
                                     color: 'hsl(0, 84%, 60%)',
-                                    border: 'none',
+                                    border: '1px solid hsl(0, 84%, 90%)',
                                     padding: '8px',
-                                    borderRadius: '50%',
+                                    borderRadius: '8px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    transition: 'all 0.2s'
+                                    transition: 'all 0.2s',
+                                    flexShrink: 0
                                 }}
                                 title={(friend.isNetwork && !friend.isManual && !friend.isAddedMe) ? "Group Contact" : "Remove Friend"}
                             >
-                                <Trash2 size={18} />
+                                <Trash2 size={16} />
                             </button>
                         </div>
                     </div>
