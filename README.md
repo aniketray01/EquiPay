@@ -148,4 +148,9 @@ LinkedIn: https://www.linkedin.com/in/aniket-ray/
 
 If you like this project, give it a ⭐ on GitHub!
 
+##  License
+
+This project is proprietary. All rights reserved - see the [LICENSE](LICENSE) file for details.
+
+
 
