@@ -210,6 +210,8 @@ router.delete('/:userId/:friendId', async (req, res) => {
         console.error('API: Error removing friend:', err);
         res.status(500).json({ message: err.message });
     }
+});
+
 // Update a friend
 router.put('/:userId/:friendId', async (req, res) => {
     try {
