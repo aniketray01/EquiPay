@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExpenses } from '../context/ExpenseContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Check, HandCoins } from 'lucide-react';
-import '../components/styles/AddExpense.css'; // Reusing similar styles
+import { ArrowLeft, Check, HandCoins, Users } from 'lucide-react';
+import '../components/styles/AddExpense.css'; // Reusing expense form styles
 
 const SettleUp = () => {
     const navigate = useNavigate();
@@ -56,19 +56,36 @@ const SettleUp = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="expense-form">
-                <div className="info-text" style={{ marginBottom: '1.5rem', backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)' }}>
-                    <HandCoins size={20} style={{ display: 'inline', marginRight: '8px' }} />
-                    Record a cash or online payment you made.
+                <div style={{
+                    padding: '1rem',
+                    backgroundColor: '#ecfdf5',
+                    borderRadius: 'var(--radius-md)',
+                    color: '#065f46',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    fontSize: '0.9rem',
+                    marginBottom: '1rem'
+                }}>
+                    <div style={{
+                        width: '32px', height: '32px', background: 'var(--card-bg)', borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                        <HandCoins size={16} color="#059669" />
+                    </div>
+                    Record a payment you made to a friend.
                 </div>
 
                 <div className="form-section">
                     {/* Recipient */}
                     <div className="input-group">
-                        <span style={{ marginRight: '1rem', fontWeight: 500, minWidth: '60px' }}>To:</span>
+                        <span style={{ marginRight: '1rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-medium)', minWidth: '60px' }}>
+                            To
+                        </span>
                         <select
                             value={recipientId}
                             onChange={(e) => setRecipientId(e.target.value)}
-                            style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                            className="input-field"
                             required
                         >
                             <option value="">Select Friend</option>
@@ -80,11 +97,13 @@ const SettleUp = () => {
 
                     {/* Group Selection */}
                     <div className="input-group">
-                        <span style={{ marginRight: '1rem', fontWeight: 500, minWidth: '60px' }}>Group:</span>
+                        <span style={{ marginRight: '1rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-medium)', minWidth: '60px' }}>
+                            Group
+                        </span>
                         <select
                             value={selectedGroupId}
                             onChange={(e) => setSelectedGroupId(e.target.value)}
-                            style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                            className="input-field"
                             required
                         >
                             <option value="unset" disabled>Select context...</option>
@@ -99,8 +118,10 @@ const SettleUp = () => {
                     </div>
 
                     {/* Amount */}
-                    <div className="input-group">
-                        <div className="input-icon">₹</div>
+                    <div className="input-group" style={{ borderBottom: 'none' }}>
+                        <div className="input-icon" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)' }}>
+                            ₹
+                        </div>
                         <input
                             type="number"
                             step="0.01"
@@ -109,6 +130,7 @@ const SettleUp = () => {
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                             required
+                            style={{ color: 'var(--success)' }}
                         />
                     </div>
                 </div>
@@ -117,7 +139,7 @@ const SettleUp = () => {
                     <button
                         type="submit"
                         className="submit-btn"
-                        style={{ backgroundColor: 'var(--success)' }}
+                        style={{ backgroundColor: 'var(--success)', boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.4)' }}
                         disabled={!recipientId || !amount || selectedGroupId === 'unset'}
                     >
                         <Check size={20} />

@@ -42,18 +42,19 @@ const ExpenseChart = () => {
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        tick={{ fill: 'var(--text-light)', fontSize: 12 }}
                         dy={10}
                     />
                     <Tooltip
-                        cursor={{ fill: '#f1f5f9' }}
+                        cursor={{ fill: 'var(--secondary-color)' }}
                         contentStyle={{
                             borderRadius: '8px',
-                            border: 'none',
-                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                            backgroundColor: 'white',
-                            color: '#1e293b'
+                            border: '1px solid var(--border-color)',
+                            boxShadow: 'var(--shadow-md)',
+                            backgroundColor: 'var(--card-bg)',
+                            color: 'var(--text-dark)'
                         }}
+                        itemStyle={{ color: 'var(--primary-color)' }}
                     />
                     <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                         {chartData.map((entry, index) => (

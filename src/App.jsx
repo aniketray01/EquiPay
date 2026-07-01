@@ -30,36 +30,40 @@ const ProtectedLayout = () => {
   );
 };
 
+import { ThemeProvider } from './context/ThemeContext';
+
 const App = () => {
   return (
     <Router>
       <AuthProvider>
-        <ExpenseProvider>
-          <div className="app-container">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
+        <ThemeProvider>
+          <ExpenseProvider>
+            <div className="app-container">
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
 
-              {/* Protected Routes */}
-              <Route element={<ProtectedLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/groups" element={<Groups />} />
-                <Route path="/group/:groupId" element={<GroupDetail />} />
-                <Route path="/add-expense" element={<AddExpense />} />
-                <Route path="/edit-expense/:expenseId" element={<AddExpense />} />
-                <Route path="/settle-up" element={<SettleUp />} />
-                <Route path="/friends" element={<Friends />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route path="/expenses" element={<AllExpenses />} />
-                <Route path="/debug" element={<Debug />} />
-              </Route>
+                {/* Protected Routes */}
+                <Route element={<ProtectedLayout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/groups" element={<Groups />} />
+                  <Route path="/group/:groupId" element={<GroupDetail />} />
+                  <Route path="/add-expense" element={<AddExpense />} />
+                  <Route path="/edit-expense/:expenseId" element={<AddExpense />} />
+                  <Route path="/settle-up" element={<SettleUp />} />
+                  <Route path="/friends" element={<Friends />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/activity" element={<Activity />} />
+                  <Route path="/expenses" element={<AllExpenses />} />
+                  <Route path="/debug" element={<Debug />} />
+                </Route>
 
-              {/* Catch all - redirect to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </ExpenseProvider>
+                {/* Catch all - redirect to home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </ExpenseProvider>
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

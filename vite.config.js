@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current directory
   const env = loadEnv(mode, process.cwd(), '')
-  
+
   return {
     define: {
       'process.env': { ...env, NODE_ENV: mode }
@@ -24,7 +24,22 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       emptyOutDir: true,
-      sourcemap: true,
+      // 🔥 IMPORTANT: hides readable source code
+      sourcemap: false,
+
+      // 🔥 Strong minification
+      minify: 'terser',
+
+      terserOptions: {
+        compress: {
+          drop_console: true, // removes console logs
+          drop_debugger: true
+        },
+        format: {
+          comments: false // removes comments
+        },
+        mangle: true // renames variables to short names
+      },
       rollupOptions: {
         output: {
           manualChunks: {

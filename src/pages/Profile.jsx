@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, User, Mail, DollarSign, Users } from 'lucide-react';
 import '../components/styles/Profile.css';
 
 const Profile = () => {
@@ -55,44 +55,55 @@ const Profile = () => {
         <div className="profile-page">
             <div className="profile-header">
                 <img
-                    src={user?.avatar}
+                    src={user?.avatar || "https://ui-avatars.com/api/?name=User&background=random"}
                     alt="Profile"
                     className="profile-avatar-large"
                 />
                 <h2 className="profile-name">{user?.name}</h2>
-                <p className="profile-email">{user?.email}</p>
-            </div>
-
-            <div className="profile-section">
-                <h3 className="section-title">Your Statistics</h3>
-                <div className="profile-stats">
-                    <div className="stat-item">
-                        <div className="stat-value">{stats.totalExpenses}</div>
-                        <div className="stat-label">Expenses</div>
-                    </div>
-                    <div className="stat-item">
-                        <div className="stat-value">{stats.totalFriends}</div>
-                        <div className="stat-label">Friends</div>
-                    </div>
-                    <div className="stat-item">
-                        <div className="stat-value">₹{stats.totalAmount.toFixed(0)}</div>
-                        <div className="stat-label">Total Spent</div>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--text-medium)' }}>
+                    <Mail size={16} />
+                    <p className="profile-email">{user?.email}</p>
                 </div>
             </div>
 
-            <div className="profile-section">
-                <h3 className="section-title">Data & Privacy</h3>
-                <p style={{ color: 'var(--text-medium)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    Download a copy of your personal data.
-                </p>
-                <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
-                    <button onClick={downloadJSON} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                        <FileText size={18} /> Export JSON
-                    </button>
-                    <button onClick={downloadCSV} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                        <Download size={18} /> Export CSV
-                    </button>
+            <div className="profile-content">
+                <div className="profile-section">
+                    <h3 className="section-title">
+                        <User size={20} className="text-primary" />
+                        Your Statistics
+                    </h3>
+                    <div className="profile-stats">
+                        <div className="stat-item">
+                            <div className="stat-value">{stats.totalExpenses}</div>
+                            <div className="stat-label">Expenses</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value">{stats.totalFriends}</div>
+                            <div className="stat-label">Friends</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value">₹{stats.totalAmount.toFixed(0)}</div>
+                            <div className="stat-label">Total Spent</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="profile-section">
+                    <h3 className="section-title">
+                        <FileText size={20} className="text-primary" />
+                        Data & Privacy
+                    </h3>
+                    <p style={{ color: 'var(--text-medium)', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                        Download a copy of your personal data for your records or portability.
+                    </p>
+                    <div className="export-grid">
+                        <button onClick={downloadJSON} className="action-btn">
+                            <FileText size={18} /> Export JSON
+                        </button>
+                        <button onClick={downloadCSV} className="action-btn">
+                            <Download size={18} /> Export CSV
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

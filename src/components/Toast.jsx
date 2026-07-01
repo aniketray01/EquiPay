@@ -11,9 +11,9 @@ const Toast = ({ message, type, onClose }) => {
 
     const getColors = () => {
         switch (type) {
-            case 'expense_added': return { bg: '#d1fae5', text: '#065f46', icon: '#10b981' };
-            case 'expense_updated': return { bg: '#dbeafe', text: '#1e40af', icon: '#3b82f6' };
-            case 'expense_deleted': return { bg: '#fee2e2', text: '#991b1b', icon: '#ef4444' };
+            case 'expense_added': return { bg: 'var(--success-light)', text: 'var(--success)', icon: 'var(--success)' };
+            case 'expense_updated': return { bg: 'var(--primary-light)', text: 'var(--primary-color)', icon: 'var(--primary-color)' };
+            case 'expense_deleted': return { bg: 'var(--danger-light)', text: 'var(--danger)', icon: 'var(--danger)' };
             default: return { bg: 'var(--white)', text: 'var(--text-dark)', icon: 'var(--primary-color)' };
         }
     };
@@ -39,7 +39,7 @@ const Toast = ({ message, type, onClose }) => {
             maxWidth: '350px'
         }}>
             <div style={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--card-bg)',
                 padding: '8px',
                 borderRadius: '50%',
                 display: 'flex',

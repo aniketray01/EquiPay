@@ -33,12 +33,21 @@ const GroupDetail = () => {
     };
 
     const getParticipantNames = (expense) => {
-        const { selectedFriends, payerId } = expense;
-        if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+        const { selectedFriends, payerId, splitDetails } = expense;
+        const myId = user?.id || 'u1';
 
-        const participantIds = [...selectedFriends];
-        if (payerId && !participantIds.includes(payerId)) {
-            participantIds.push(payerId);
+        let participantIds = [];
+        if (splitDetails && splitDetails.length > 0) {
+            participantIds = splitDetails.map(s => s.userId);
+        } else {
+            if (!selectedFriends || selectedFriends.length === 0) return 'No one';
+            participantIds = [...selectedFriends];
+            if (payerId && !participantIds.includes(payerId)) {
+                participantIds.push(payerId);
+            }
+            if (!participantIds.includes(myId)) {
+                participantIds.push(myId);
+            }
         }
 
         return participantIds.map(fid => getMemberName(fid)).join(', ');
@@ -199,23 +208,31 @@ const GroupDetail = () => {
                         {groupExpenses.length === 0 ? (
                             <p className="activity-detail">No expenses in this group yet.</p>
                         ) : (
-                            groupExpenses.map(expense => (
-                                <div key={expense.id} className="activity-item" style={{ position: 'relative' }}>
-                                    <div className="activity-icon">📝</div>
-                                    <div className="activity-info">
-                                        <p className="activity-desc">{expense.description}</p>
-                                        <p className="activity-detail">
-                                            {getMemberName(expense.payerId)} paid ₹{expense.amount.toFixed(2)}
-                                        </p>
-                                        <p className="activity-detail" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
-                                            Split with: {getParticipantNames(expense)}
-                                        </p>
+                            groupExpenses.map(expense => {
+                                const isSettlement = expense.type === 'settlement';
+                                return (
+                                    <div key={expense.id} className="activity-item" style={{ position: 'relative' }}>
+                                        <div className="activity-icon">{isSettlement ? '💸' : '📝'}</div>
+                                        <div className="activity-info">
+                                            <p className="activity-desc">{expense.description}</p>
+                                            <p className="activity-detail">
+                                                {isSettlement
+                                                    ? `${getMemberName(expense.payerId)} paid ${getMemberName(expense.payeeId)} ₹${expense.amount.toFixed(2)}`
+                                                    : `${getMemberName(expense.payerId)} paid ₹${expense.amount.toFixed(2)}`
+                                                }
+                                            </p>
+                                            {!isSettlement && (
+                                                <p className="activity-detail" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
+                                                    Split with: {getParticipantNames(expense)}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                                            <p className="activity-date">{new Date(expense.date).toLocaleDateString()}</p>
+                                        </div>
                                     </div>
-                                    <div className="activity-amount" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
-                                        <p className="activity-date">{new Date(expense.date).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}

@@ -2,33 +2,54 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    animation: fadeIn 0.5s ease-out;
 }
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header Section */
 .dashboard-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 1rem;
 }
 
 .dashboard-title {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.875rem;
+    font-weight: 800;
     color: var(--text-dark);
     letter-spacing: -0.025em;
+    margin: 0;
 }
 
 .action-buttons {
     display: flex;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .btn {
-    padding: 0.625rem 1.25rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-full);
+    font-size: 0.95rem;
     font-weight: 600;
-    transition: all var(--transition-speed);
-    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .btn:active {
@@ -42,76 +63,104 @@
 
 .btn-primary:hover {
     background-color: var(--primary-hover);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -1px rgba(16, 185, 129, 0.1);
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border: 1px solid var(--border-color);
-    color: var(--text-medium);
+    color: var(--text-dark);
 }
 
 .btn-secondary:hover {
     background-color: var(--secondary-color);
-    color: var(--text-dark);
-}
-
-.btn-danger {
-    background-color: var(--danger);
-    color: white;
-}
-
-.btn-danger:hover {
-    filter: brightness(0.9);
+    border-color: #d1d5db;
 }
 
 .btn-orange {
-    background-color: var(--warning);
+    background-color: #f97316;
+    /* Orange-500 */
     color: white;
 }
 
 .btn-orange:hover {
-    filter: brightness(0.95);
+    background-color: #ea580c;
+    /* Orange-600 */
+    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3);
+    transform: translateY(-1px);
 }
-
 
 /* Stats Cards */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
 }
 
 .balance-card {
-    background-color: var(--white);
-    border: 1px solid var(--border-color);
+    background: var(--card-bg);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-speed);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
 }
 
 .balance-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: var(--border-color);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.card-icon.primary {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.card-icon.danger {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+
+.card-icon.success {
+    background-color: var(--success-light);
+    color: var(--success);
 }
 
 .card-label {
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    text-transform: uppercase;
     color: var(--text-light);
+    text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
 }
 
 .card-value {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 800;
     color: var(--text-dark);
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
+    line-height: 1;
+    margin-bottom: 0.5rem;
 }
 
 .card-value.positive {
@@ -123,110 +172,127 @@
 }
 
 .card-subtext {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--text-light);
-    font-weight: 400;
 }
 
-/* Two-column layout */
+/* Main Content Grid */
 .dashboard-main {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
 }
 
-.chart-card {
-    background-color: var(--white);
-    border: 1px solid var(--border-color);
+.content-card {
+    background: var(--card-bg);
     border-radius: var(--radius-lg);
-    padding: 1.5rem;
+    border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
-    min-height: 350px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-.activity-card {
-    background-color: var(--white);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    box-shadow: var(--shadow-sm);
+.card-title-bar {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--secondary-color);
 }
 
 .section-title {
-    font-size: 1.1rem;
+    font-size: 1.125rem;
     font-weight: 700;
-    margin-bottom: 1.25rem;
     color: var(--text-dark);
+    margin: 0;
 }
 
+.chart-container {
+    padding: 1.5rem;
+    min-height: 300px;
+}
+
+/* Activity Feed */
 .activity-list {
     display: flex;
     flex-direction: column;
 }
 
 .activity-item {
+    padding: 1rem 1.5rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    gap: 1rem;
     border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.15s;
 }
 
 .activity-item:last-child {
     border-bottom: none;
 }
 
-.activity-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
+.activity-item:hover {
+    background-color: var(--secondary-color);
+}
+
+.activity-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
     background-color: var(--secondary-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    color: var(--text-medium);
     flex-shrink: 0;
 }
 
-.activity-info {
+.activity-content {
     flex: 1;
-    margin-left: 1rem;
+    min-width: 0;
 }
 
 .activity-desc {
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-dark);
+    margin-bottom: 0.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.activity-detail {
+.activity-meta {
     font-size: 0.8rem;
     color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .activity-amount {
+    font-weight: 700;
+    font-size: 0.95rem;
     text-align: right;
 }
 
-.amount-text {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.amount-text.positive {
+.amount.positive {
     color: var(--success);
 }
 
-.amount-text.negative {
+.amount.negative {
     color: var(--danger);
 }
 
-.activity-date {
-    font-size: 0.75rem;
-    color: var(--text-light);
+@media (max-width: 1024px) {
+    .dashboard-main {
+        grid-template-columns: 1fr;
+    }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
@@ -236,35 +302,14 @@
     .action-buttons {
         width: 100%;
         overflow-x: auto;
-        padding-bottom: 0.5rem;
-        -webkit-overflow-scrolling: touch;
     }
 
     .btn {
+        padding: 0.6rem 1rem;
         white-space: nowrap;
-        padding: 0.5rem 1rem;
     }
 
     .stats-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .dashboard-main {
-        grid-template-columns: 1fr;
-    }
-
-    .card-value {
-        font-size: 1.5rem;
-    }
-
-    .activity-item {
-        padding: 1rem 0;
-    }
-
-    .activity-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
     }
 }

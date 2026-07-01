@@ -9,6 +9,9 @@
 
   --secondary-color: #f3f4f6;
   /* Gray 100 */
+  --bg-body: #f9fafb;
+  /* Gray 50 */
+
   --text-dark: #111827;
   /* Gray 900 */
   --text-medium: #4b5563;
@@ -18,9 +21,15 @@
 
   --danger: #ef4444;
   /* Red 500 */
+  --danger-light: #fee2e2;
+  /* Red 100 */
   --warning: #f59e0b;
   /* Amber 500 */
+  --warning-light: #fef3c7;
+  /* Amber 100 */
   --success: #10b981;
+  --success-light: #d1fae5;
+  /* Emerald 100 */
 
   --white: #ffffff;
   --card-bg: #ffffff;
@@ -39,6 +48,52 @@
   --transition-speed: 0.2s;
 }
 
+/* Dark Mode Overrides */
+.dark {
+  --primary-color: #34d399;
+  /* Emerald 400 */
+  --primary-hover: #10b981;
+  /* Emerald 500 */
+  --primary-light: #064e3b;
+  /* Emerald 900 */
+
+  --secondary-color: #374151;
+  /* Gray 700 */
+  --bg-body: #111827;
+  /* Gray 900 */
+
+  --text-dark: #f9fafb;
+  /* Gray 50 */
+  --text-medium: #d1d5db;
+  /* Gray 300 */
+  --text-light: #9ca3af;
+  /* Gray 400 */
+
+  --danger: #f87171;
+  /* Red 400 */
+  --danger-light: #450a0a;
+  /* Red 950 */
+  --warning: #fbbf24;
+  /* Amber 400 */
+  --warning-light: #451a03;
+  /* Amber 950 */
+  --success: #34d399;
+  /* Emerald 400 */
+  --success-light: #064e3b;
+  /* Emerald 900 */
+
+  --white: #1f2937;
+  /* Gray 800 (Card BG) */
+  --card-bg: #1f2937;
+  /* Gray 800 */
+  --border-color: #374151;
+  /* Gray 700 */
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
 /* Base Reset */
 * {
   box-sizing: border-box;
@@ -48,7 +103,7 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: #f9fafb;
+  background-color: var(--bg-body);
   /* Gray 50 */
   color: var(--text-dark);
   line-height: 1.5;
@@ -102,6 +157,19 @@ ul {
   color: var(--text-dark);
   background: transparent;
   transition: all var(--transition-speed);
+}
+
+select {
+  background-color: var(--card-bg);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+}
+
+option {
+  background-color: var(--card-bg);
+  color: var(--text-dark);
 }
 
 .input-field:focus {

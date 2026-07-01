@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExpenses } from '../context/ExpenseContext';
 import { Search, History, PlusCircle, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
-import '../components/styles/Dashboard.css';
+import '../components/styles/Activity.css';
 
 const Activity = () => {
     const { user } = useAuth();
@@ -43,75 +43,100 @@ const Activity = () => {
         return 'just now';
     };
 
-    return (
-        <div className="dashboard-container">
-            <h2 className="dashboard-title">Activity Log</h2>
+    // Group activities by date
+    const groupedActivities = useMemo(() => {
+        const groups = {};
+        filteredActivities.forEach(activity => {
+            const date = new Date(activity.date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            if (!groups[date]) {
+                groups[date] = [];
+            }
+            groups[date].push(activity);
+        });
+        return groups;
+    }, [filteredActivities]);
 
-            {/* Search Bar */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+    return (
+        <div className="activity-page">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 className="section-title" style={{ fontSize: '1.5rem', margin: 0 }}>Activity Log</h2>
+
+                {/* Search Bar */}
                 <div className="input-group" style={{
-                    flex: 1,
+                    maxWidth: '300px',
+                    padding: '0.5rem 1rem',
+                    background: 'var(--card-bg)',
                     border: '1px solid var(--border-color)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '0.6rem 1rem',
-                    backgroundColor: 'var(--white)',
-                    boxShadow: 'var(--shadow-sm)'
+                    borderRadius: 'var(--radius-full)'
                 }}>
-                    <Search size={20} style={{ color: 'var(--text-light)', marginRight: '0.8rem' }} />
+                    <Search size={18} style={{ color: 'var(--text-light)', marginRight: '0.5rem' }} />
                     <input
                         type="text"
-                        placeholder="Search all activity..."
+                        placeholder="Search activity..."
                         className="input-field"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ fontSize: '0.95rem' }}
+                        style={{ fontSize: '0.9rem' }}
                     />
                 </div>
             </div>
 
-            <div className="activity-card">
-                <div className="activity-list">
-                    {filteredActivities.length === 0 ? (
-                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-medium)' }}>
-                            <History size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                            <p>No activity yet.</p>
-                        </div>
-                    ) : (
-                        filteredActivities.map(activity => (
-                            <div key={activity._id || activity.id} className="activity-item" style={{ padding: '1.2rem 1rem' }}>
-                                <div className="activity-icon" style={{
-                                    backgroundColor: 'var(--secondary-color)',
-                                    borderRadius: '50%',
-                                    width: '40px',
-                                    height: '40px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    {getActivityIcon(activity.type)}
-                                </div>
-                                <div className="activity-info">
-                                    <p className="activity-desc" style={{ fontSize: '0.95rem', fontWeight: 500 }}>
-                                        {activity.description}
-                                    </p>
-                                    <p className="activity-detail" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                                        {activity.actorId === user?.id ? 'You' : activity.actorName} performed this action
-                                        {activity.metadata?.amount && ` • ₹${activity.metadata.amount.toFixed(2)}`}
-                                    </p>
-                                </div>
-                                <div className="activity-amount" style={{ textAlign: 'right' }}>
-                                    <p className="activity-date" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
-                                        {formatRelativeTime(activity.date)}
-                                    </p>
-                                    <p className="activity-detail" style={{ fontSize: '0.7rem' }}>
-                                        {new Date(activity.date).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            </div>
-                        ))
-                    )}
+            {Object.keys(groupedActivities).length === 0 ? (
+                <div style={{
+                    padding: '3rem',
+                    textAlign: 'center',
+                    color: 'var(--text-medium)',
+                    background: 'var(--card-bg)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1px solid var(--border-color)'
+                }}>
+                    <History size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                    <p>No activity yet.</p>
                 </div>
-            </div>
+            ) : (
+                <div className="timeline-container">
+                    {Object.entries(groupedActivities).map(([date, activities]) => (
+                        <div key={date}>
+                            <div className="activity-group-date">{date}</div>
+                            {activities.map(activity => (
+                                <div key={activity._id || activity.id} className="timeline-item">
+                                    <div className="timeline-icon-wrapper">
+                                        {getActivityIcon(activity.type)}
+                                    </div>
+
+                                    <div className="activity-card-modern">
+                                        <div className="activity-content-modern">
+                                            <div className="activity-header-line">
+                                                <div className="activity-title-modern">
+                                                    {activity.description}
+                                                </div>
+                                                <div className="activity-time-modern">
+                                                    {formatRelativeTime(activity.date)}
+                                                </div>
+                                            </div>
+
+                                            <div className="activity-meta-modern">
+                                                <span>
+                                                    {activity.actorId === user?.id ? 'You' : activity.actorName}
+                                                </span>
+                                                {activity.metadata?.amount && (
+                                                    <span className="activity-amount-tag">
+                                                        ₹{activity.metadata.amount.toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

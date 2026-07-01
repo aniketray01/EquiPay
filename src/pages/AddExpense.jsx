@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useExpenses } from '../context/ExpenseContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Check, UserPlus, X } from 'lucide-react';
+import { ArrowLeft, Check, UserPlus, X, Receipt, Banknote } from 'lucide-react';
 import '../components/styles/AddExpense.css';
 
 const AddExpense = () => {
@@ -30,6 +30,7 @@ const AddExpense = () => {
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const [newFriend, setNewFriend] = useState({ name: '', email: '' });
     const [isAddingFriend, setIsAddingFriend] = useState(false);
+    const [includeMe, setIncludeMe] = useState(true);
 
     // Initialize friends selection if group is pre-selected
     useEffect(() => {
@@ -62,6 +63,10 @@ const AddExpense = () => {
                         splits[s.userId] = s.amount.toString();
                     });
                     setCustomSplits(splits);
+
+                    // Determine if the current user ('You') is in the splitDetails
+                    const isIncluded = expenseToEdit.splitDetails.some(s => s.userId === (user?.id || 'u1') || s.userId === 'me');
+                    setIncludeMe(isIncluded);
                 }
             }
         }
@@ -107,37 +112,55 @@ const AddExpense = () => {
         if (!amount) return [];
 
         const totalAmount = parseFloat(amount);
-        // Participants = Selected Friends + Current User (Always included in this simple version)
-        const participants = selectedFriends.length + 1;
+        const myId = user?.id || 'u1';
+        // Participants = Selected Friends + Current User (if included)
+        const participants = selectedFriends.length + (includeMe ? 1 : 0);
+
+        if (participants === 0) return [];
 
         if (splitType === 'equal') {
             const perPersonBase = Math.floor((totalAmount / participants) * 100) / 100;
             const remainderCents = Math.round((totalAmount - (perPersonBase * participants)) * 100);
 
-            return [
-                {
-                    userId: user?.id || 'u1',
+            const details = [];
+            if (includeMe) {
+                details.push({
+                    userId: myId,
                     name: 'You',
                     amount: perPersonBase + (remainderCents > 0 ? 0.01 : 0)
-                },
-                ...selectedFriends.map((friendId, index) => ({
+                });
+            }
+
+            selectedFriends.forEach((friendId, index) => {
+                const hasRemainder = includeMe ? (index + 1 < remainderCents) : (index < remainderCents);
+                details.push({
                     userId: friendId,
                     name: friends.find(f => f.id === friendId)?.name || 'Unknown',
-                    amount: perPersonBase + (index + 1 < remainderCents ? 0.01 : 0)
-                }))
-            ];
+                    amount: perPersonBase + (hasRemainder ? 0.01 : 0)
+                });
+            });
+
+            return details;
         } else if (splitType === 'custom') {
-            return [
-                { userId: user?.id || 'u1', name: 'You', amount: parseFloat(customSplits[user?.id || 'u1'] || 0) },
-                ...selectedFriends.map(friendId => ({
+            const details = [];
+            if (includeMe) {
+                details.push({
+                    userId: myId,
+                    name: 'You',
+                    amount: parseFloat(customSplits[myId] || 0)
+                });
+            }
+            selectedFriends.forEach(friendId => {
+                details.push({
                     userId: friendId,
                     name: friends.find(f => f.id === friendId)?.name || 'Unknown',
                     amount: parseFloat(customSplits[friendId] || 0)
-                }))
-            ];
+                });
+            });
+            return details;
         }
         return [];
-    }, [amount, selectedFriends, splitType, customSplits, friends, user]);
+    }, [amount, selectedFriends, splitType, customSplits, friends, user, includeMe]);
 
     const handleCustomSplitChange = (userId, value) => {
         setCustomSplits(prev => ({ ...prev, [userId]: value }));
@@ -235,7 +258,9 @@ const AddExpense = () => {
                 {/* Basic Details */}
                 <div className="form-section">
                     <div className="input-group">
-                        <div className="input-icon">📝</div>
+                        <div className="input-icon">
+                            <Receipt size={20} color="var(--text-medium)" />
+                        </div>
                         <input
                             type="text"
                             placeholder="Enter a description"
@@ -243,13 +268,15 @@ const AddExpense = () => {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             disabled={isSettlement}
-                            style={isSettlement ? { backgroundColor: 'var(--bg-light)', cursor: 'not-allowed' } : {}}
+                            style={isSettlement ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                             autoFocus={!isSettlement}
                         />
                     </div>
 
                     <div className="input-group">
-                        <div className="input-icon">₹</div>
+                        <div className="input-icon">
+                            <Banknote size={20} color="var(--text-medium)" />
+                        </div>
                         <input
                             type="number"
                             step="0.01"
@@ -261,12 +288,15 @@ const AddExpense = () => {
                     </div>
 
                     {/* Payer Selection */}
-                    <div className="input-group" style={{ paddingTop: '1rem' }}>
-                        <span style={{ marginRight: '1rem', fontWeight: 500 }}>Paid By:</span>
+                    <div className="input-group">
+                        <span style={{ marginRight: '1rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-medium)' }}>
+                            Paid By
+                        </span>
                         <select
                             value={payerId}
                             onChange={(e) => setPayerId(e.target.value)}
-                            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', flex: 1 }}
+                            className="input-field"
+                            style={{ padding: '0.25rem 0' }}
                         >
                             <option value={user?.id || 'u1'}>You</option>
                             {filteredFriends.map(f => (
@@ -276,8 +306,10 @@ const AddExpense = () => {
                     </div>
 
                     {/* Group Selection */}
-                    <div className="input-group" style={{ borderBottom: 'none', paddingTop: '1rem' }}>
-                        <span style={{ marginRight: '1rem', fontWeight: 500 }}>Group:</span>
+                    <div className="input-group" style={{ borderBottom: 'none' }}>
+                        <span style={{ marginRight: '1rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-medium)' }}>
+                            Group
+                        </span>
                         <select
                             value={selectedGroupId || 'unset'}
                             onChange={(e) => {
@@ -288,7 +320,8 @@ const AddExpense = () => {
                                     setSelectedFriends(friendsInGroup);
                                 }
                             }}
-                            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', minWidth: '150px' }}
+                            className="input-field"
+                            style={{ padding: '0.25rem 0' }}
                             required
                         >
                             <option value="unset" disabled>Select context...</option>
@@ -313,7 +346,7 @@ const AddExpense = () => {
 
                 {!isSettlement ? (
                     <div className="form-section">
-                        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="section-header">
                             <span>Split with</span>
                             <button
                                 type="button"
@@ -337,6 +370,14 @@ const AddExpense = () => {
                             </button>
                         </div>
                         <div className="friend-selector">
+                            <label className="friend-checkbox" style={{ fontWeight: 600, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '8px', width: '100%', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={includeMe}
+                                    onChange={() => setIncludeMe(!includeMe)}
+                                />
+                                <span className="friend-name" style={{ color: 'var(--primary-color)' }}>Include myself (You)</span>
+                            </label>
                             {friends.length === 0 ? (
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', textAlign: 'center', padding: '1rem' }}>
                                     No friends yet. Add one to start splitting!
@@ -362,8 +403,7 @@ const AddExpense = () => {
                             <select
                                 value={payeeId}
                                 onChange={(e) => setPayeeId(e.target.value)}
-                                style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', flex: 1 }}
-                                required
+                                className="input-field"
                             >
                                 <option value="">Select Recipient</option>
                                 <option value={user?.id || 'u1'}>You</option>
@@ -433,7 +473,7 @@ const AddExpense = () => {
             {/* Add Friend Modal */}
             {showAddFriendModal && (
                 <div className="modal-backdrop">
-                    <div className="form-section shadow-lg" style={{ width: '100%', maxWidth: '400px', margin: '1rem', padding: '1.5rem' }}>
+                    <div className="form-section shadow-lg" style={{ width: '100%', maxWidth: '360px', margin: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h3 className="section-title" style={{ margin: 0 }}>Add Friend</h3>
                             <button
@@ -445,26 +485,24 @@ const AddExpense = () => {
                             </button>
                         </div>
                         <form onSubmit={handleAddFriend} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)' }}>NAME</label>
+                            <div className="input-group">
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)', minWidth: '50px' }}>Name</span>
                                 <input
                                     type="text"
-                                    placeholder="Friend's name"
+                                    placeholder="Enter name"
                                     className="input-field"
-                                    style={{ borderBottom: '1px solid var(--border-color)', width: '100%', padding: '0.5rem 0' }}
                                     value={newFriend.name}
                                     onChange={(e) => setNewFriend({ ...newFriend, name: e.target.value })}
                                     required
                                     autoFocus
                                 />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)' }}>EMAIL</label>
+                            <div className="input-group">
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-medium)', minWidth: '50px' }}>Email</span>
                                 <input
                                     type="email"
-                                    placeholder="Friend's email"
+                                    placeholder="Enter email"
                                     className="input-field"
-                                    style={{ borderBottom: '1px solid var(--border-color)', width: '100%', padding: '0.5rem 0' }}
                                     value={newFriend.email}
                                     onChange={(e) => setNewFriend({ ...newFriend, email: e.target.value })}
                                     required

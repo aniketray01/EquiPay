@@ -27,17 +27,16 @@ const Login = () => {
         <div className="login-page">
             <div className="login-card">
                 <div className="login-logo">
-                    <Landmark size={32} />
+                    <Landmark size={32} strokeWidth={2.5} />
                 </div>
                 <h2 className="login-title">Welcome to EquiPay</h2>
                 <p className="login-subtitle">
-                    Split expenses fairly and effortlessly.
+                    Split expenses fairly and effortlessly with friends and family.
                 </p>
 
                 <div className="mt-8">
                     <button onClick={handleLogin} className="google-btn">
-                        {/* Google Icon Mock */}
-                        <svg className="google-icon" width="18" height="18" viewBox="0 0 24 24">
+                        <svg className="google-icon" width="20" height="20" viewBox="0 0 24 24">
                             <path
                                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                                 fill="#4285F4"
@@ -57,6 +56,10 @@ const Login = () => {
                         </svg>
                         Sign in with Google
                     </button>
+
+                    <p className="login-footer">
+                        By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+                    </p>
                 </div>
             </div>
         </div>
