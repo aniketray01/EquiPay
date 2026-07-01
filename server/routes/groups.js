@@ -2,6 +2,7 @@ import express from 'express';
 import Group from '../models/Group.js';
 import User from '../models/User.js';
 import Activity from '../models/Activity.js';
+import Friend from '../models/Friend.js';
 
 const router = express.Router();
 
@@ -14,12 +15,37 @@ const populateMemberProfiles = async (group) => {
         firebaseId: { $in: allMemberIds }
     }).select('firebaseId name email avatar');
 
-    group.memberProfiles = profiles.map(p => ({
+    const mappedProfiles = profiles.map(p => ({
         id: p.firebaseId,
         name: p.name,
         email: p.email,
         avatar: p.avatar
     }));
+
+    // Find which member IDs did not have user profiles (Ghost accounts)
+    const fetchedUserIds = new Set(profiles.map(p => String(p.firebaseId)));
+    const missingMemberIds = allMemberIds.filter(id => id && !fetchedUserIds.has(String(id)));
+
+    if (missingMemberIds.length > 0) {
+        // Fetch from Friend collection to get the names/emails of ghost members
+        const ghostFriends = await Friend.find({
+            friendId: { $in: missingMemberIds }
+        });
+
+        ghostFriends.forEach(f => {
+            if (!mappedProfiles.some(p => p.id === f.friendId)) {
+                mappedProfiles.push({
+                    id: f.friendId,
+                    name: f.name,
+                    email: f.email,
+                    avatar: null,
+                    isGhost: true
+                });
+            }
+        });
+    }
+
+    group.memberProfiles = mappedProfiles;
     return group;
 };
 

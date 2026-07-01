@@ -50,6 +50,17 @@ router.get('/:userId', async (req, res) => {
             User.find({ firebaseId: { $in: addedMeUserIds } })
         ]);
 
+        // Find which member IDs did not have registered user profiles
+        const fetchedNetworkIds = new Set(networkProfiles.map(p => String(p.firebaseId)));
+        const missingNetworkIds = allMemberIds.filter(id => id && !fetchedNetworkIds.has(String(id)));
+
+        let ghostNetworkProfiles = [];
+        if (missingNetworkIds.length > 0) {
+            ghostNetworkProfiles = await Friend.find({
+                friendId: { $in: missingNetworkIds }
+            });
+        }
+
         // Map manual friends to include profile info if available
         const manualWithProfiles = manualFriends.map(f => {
             const profile = manualProfiles.find(p => p.firebaseId === f.friendId);
@@ -62,14 +73,24 @@ router.get('/:userId', async (req, res) => {
             };
         });
 
-        // Map network friends
-        const networkWithProfiles = networkProfiles.map(p => ({
-            id: p.firebaseId,
-            name: p.name,
-            email: p.email,
-            avatar: p.avatar,
-            isNetwork: true
-        }));
+        // Map network friends (including ghost network profiles)
+        const networkWithProfiles = [
+            ...networkProfiles.map(p => ({
+                id: p.firebaseId,
+                name: p.name,
+                email: p.email,
+                avatar: p.avatar,
+                isNetwork: true
+            })),
+            ...ghostNetworkProfiles.map(f => ({
+                id: f.friendId,
+                name: f.name,
+                email: f.email,
+                avatar: null,
+                isNetwork: true,
+                isGhost: true
+            }))
+        ];
 
         // Map reverse friends (People who added the current user)
         const addedMeWithProfiles = addedMeProfiles.map(p => ({
