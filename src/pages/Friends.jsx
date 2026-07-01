@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
-import { Users, Mail, X, Trash2, UserPlus } from 'lucide-react';
+import { Users, Mail, X, Trash2, UserPlus, Pencil } from 'lucide-react';
 import '../components/styles/Friends.css';
 
 const Friends = () => {
-    const { friends, addFriend, removeFriend } = useExpenses();
+    const { friends, addFriend, removeFriend, updateFriend } = useExpenses();
     const [showModal, setShowModal] = useState(false);
     const [newFriend, setNewFriend] = useState({ name: '', email: '' });
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editFriendData, setEditFriendData] = useState({ id: '', name: '', email: '' });
 
     const [isAdding, setIsAdding] = useState(false);
 
@@ -22,6 +24,23 @@ const Friends = () => {
                 alert("Failed to add friend. Please check the email or try again later.");
             } finally {
                 setIsAdding(false);
+            }
+        }
+    };
+
+    const handleEditClick = (friend) => {
+        setEditFriendData({ id: friend.id, name: friend.name, email: friend.email });
+        setShowEditModal(true);
+    };
+
+    const handleEditFriend = async (e) => {
+        e.preventDefault();
+        if (editFriendData.name && editFriendData.email) {
+            try {
+                await updateFriend(editFriendData.id, { name: editFriendData.name, email: editFriendData.email });
+                setShowEditModal(false);
+            } catch (err) {
+                alert("Failed to update friend. Please check the email or try again later.");
             }
         }
     };
@@ -58,6 +77,27 @@ const Friends = () => {
                             )}
                             {friend.isAddedMe && !friend.isManual && !friend.isNetwork && (
                                 <span className="friend-badge network">Network</span>
+                            )}
+
+                            {friend.isManual && (
+                                <button
+                                    onClick={() => handleEditClick(friend)}
+                                    className="edit-btn"
+                                    title="Edit Friend"
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: 'var(--text-light)',
+                                        padding: '4px',
+                                        marginRight: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <Pencil size={18} />
+                                </button>
                             )}
 
                             <button
@@ -119,6 +159,50 @@ const Friends = () => {
                             </div>
                             <button type="submit" className="modal-footer-btn" disabled={isAdding}>
                                 {isAdding ? 'Adding...' : 'Add Friend'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Friend Modal */}
+            {showEditModal && (
+                <div className="modal-overlay" onClick={(e) => {
+                    if (e.target.className === 'modal-overlay') setShowEditModal(false);
+                }}>
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3 className="modal-title">Edit Friend</h3>
+                            <button onClick={() => setShowEditModal(false)} className="close-modal-btn">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditFriend} className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Name</label>
+                                <input
+                                    type="text"
+                                    value={editFriendData.name}
+                                    onChange={(e) => setEditFriendData({ ...editFriendData, name: e.target.value })}
+                                    className="form-input"
+                                    placeholder="Enter friend's name"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Email</label>
+                                <input
+                                    type="email"
+                                    value={editFriendData.email}
+                                    onChange={(e) => setEditFriendData({ ...editFriendData, email: e.target.value })}
+                                    className="form-input"
+                                    placeholder="friend@example.com"
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="modal-footer-btn">
+                                Save Changes
                             </button>
                         </form>
                     </div>

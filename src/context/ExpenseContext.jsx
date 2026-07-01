@@ -134,6 +134,9 @@ export const ExpenseProvider = ({ children }) => {
             } else if (type === 'friend_removed') {
                 setFriends(prev => prev.filter(f => f.id !== id && f.friendId !== id));
                 message = `A friend was removed.`;
+            } else if (type === 'friend_updated') {
+                refreshData();
+                message = `Friend details were updated.`;
             }
 
             if (message) {
@@ -299,6 +302,23 @@ export const ExpenseProvider = ({ children }) => {
             return normalizedFriend;
         } catch (err) {
             console.error("Error adding friend:", err);
+            throw err;
+        }
+    }, [user]);
+
+    const updateFriend = useCallback(async (friendId, updatedFriend) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/friends/${user.id}/${friendId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedFriend)
+            });
+            const data = await res.json();
+            const normalizedFriend = { ...data, id: data.id || data.friendId || data._id };
+            setFriends(prev => prev.map(f => (f.id === friendId || f.friendId === friendId) ? { ...f, ...normalizedFriend } : f));
+            return normalizedFriend;
+        } catch (err) {
+            console.error("Error updating friend:", err);
             throw err;
         }
     }, [user]);
@@ -478,6 +498,7 @@ export const ExpenseProvider = ({ children }) => {
         addExpense,
         updateExpense,
         addFriend,
+        updateFriend,
         removeFriend,
         addGroup,
         addMemberToGroup,
@@ -486,7 +507,7 @@ export const ExpenseProvider = ({ children }) => {
         getSimplifiedDebts,
         getBalances,
         balances
-    }), [expenses, friends, groups, loading, addExpense, addFriend, removeFriend, addGroup, addMemberToGroup, deleteGroup, deleteExpense, getSimplifiedDebts, getBalances, balances]);
+    }), [expenses, friends, groups, loading, addExpense, addFriend, updateFriend, removeFriend, addGroup, addMemberToGroup, deleteGroup, deleteExpense, getSimplifiedDebts, getBalances, balances]);
 
     return (
         <ExpenseContext.Provider value={contextValue}>

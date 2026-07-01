@@ -210,6 +210,71 @@ router.delete('/:userId/:friendId', async (req, res) => {
         console.error('API: Error removing friend:', err);
         res.status(500).json({ message: err.message });
     }
+// Update a friend
+router.put('/:userId/:friendId', async (req, res) => {
+    try {
+        const { userId, friendId } = req.params;
+        const { name, email } = req.body;
+
+        const friend = await Friend.findOne({ userId, friendId });
+        if (!friend) {
+            return res.status(404).json({ message: 'Friend record not found' });
+        }
+
+        if (name) friend.name = name;
+        
+        let newEmail = friend.email;
+        if (email) {
+            newEmail = email.toLowerCase().trim();
+            friend.email = newEmail;
+        }
+
+        // Check if there is an existing user registered with this new email
+        const existingUser = await User.findOne({ email: newEmail });
+        const oldFriendId = friend.friendId;
+        
+        if (existingUser && oldFriendId !== existingUser.firebaseId) {
+            const newFriendId = existingUser.firebaseId;
+            console.log(`Email updated to registered user. Consolidating ghost ID ${oldFriendId} to ${newFriendId}...`);
+
+            // Consolidate expenses
+            await Expense.updateMany({ payerId: oldFriendId }, { $set: { payerId: newFriendId } });
+            await Expense.updateMany({ payeeId: oldFriendId }, { $set: { payeeId: newFriendId } });
+            await Expense.updateMany({ "splitDetails.userId": oldFriendId }, { $set: { "splitDetails.$.userId": newFriendId } });
+
+            // Consolidate group memberships
+            await Group.updateMany({ members: oldFriendId }, { $set: { "members.$": newFriendId } });
+
+            // Update the Friend record's friendId
+            friend.friendId = newFriendId;
+        }
+
+        await friend.save();
+
+        // Notify via sockets
+        req.io.to(userId).emit('data_updated', { type: 'friend_updated', data: friend });
+        req.io.to(oldFriendId).emit('data_updated', { type: 'friend_updated', id: oldFriendId });
+        if (existingUser) {
+            req.io.to(existingUser.firebaseId).emit('data_updated', { type: 'friend_updated', id: existingUser.firebaseId });
+        }
+
+        // Log Activity
+        const actor = await User.findOne({ firebaseId: userId });
+        const actorName = actor ? actor.name : 'Someone';
+        await new Activity({
+            userId,
+            actorId: userId,
+            actorName,
+            type: 'friend_updated',
+            description: `You updated information for ${friend.name}`,
+            metadata: { friendId: friend.friendId }
+        }).save();
+
+        res.json(friend);
+    } catch (err) {
+        console.error('API: Error updating friend:', err);
+        res.status(500).json({ message: err.message });
+    }
 });
 
 export default router;
